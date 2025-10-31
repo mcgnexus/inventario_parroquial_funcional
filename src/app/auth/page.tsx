@@ -124,7 +124,8 @@ function AuthPageContent() {
         const result = await response.json();
         console.log('[Auth] Login exitoso vía API');
 
-        const session = result?.data?.session;
+        // Aceptar ambas formas de respuesta: envuelta en data o al nivel raíz
+        const session = result?.data?.session ?? result?.session;
         if (session) {
           console.log('[Auth] Login exitoso - sesión establecida en el servidor');
           console.log('[Auth] Iniciando sincronización de sesión...');
