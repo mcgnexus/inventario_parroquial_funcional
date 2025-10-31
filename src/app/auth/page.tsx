@@ -121,10 +121,10 @@ function AuthPageContent() {
       console.log('[Auth] Respuesta API:', response.status);
       
       if (response.ok) {
-        const result = await response.json();
+        const result = await response.json().catch(() => null);
         console.log('[Auth] Login exitoso vía API');
 
-        // Aceptar ambas formas de respuesta: envuelta en data o al nivel raíz
+        // La respuesta de la API debería ser { session: { ... } }
         const session = result?.data?.session ?? result?.session;
         if (session) {
           console.log('[Auth] Login exitoso - sesión establecida en el servidor');
@@ -170,13 +170,18 @@ function AuthPageContent() {
           
         } else {
           console.warn('[Auth] No se recibió sesión en la respuesta de la API. Result:', result);
-          setError('No se recibió información de sesión');
+          // Si la API responde OK pero sin sesión, es probable que las credenciales sean inválidas.
+          setError(result?.error || 'Email o contraseña incorrectos.');
         }
         return;
       } else {
-        const errorData = await response.json();
-        console.log('[Auth] Error en API route:', errorData.error);
-        throw new Error(errorData.error || 'Error de autenticación');
+        // Si la respuesta no es OK, es un error del servidor (e.g. 500)
+        const errorData = await response.json().catch(() => null);
+        const serverErrorMessage = errorData?.error || `Error del servidor: ${response.statusText} (${response.status})`;
+        console.error('[Auth] Error en API route:', serverErrorMessage, errorData);
+        // Este mensaje apunta a un problema de configuración en Vercel (variables de entorno)
+        setError(`Error de comunicación con el servidor. Por favor, contacta al administrador. (${response.status})`);
+        // No lanzamos error para que no lo capture el bloque catch de abajo
       }
       
     } catch (err) {
