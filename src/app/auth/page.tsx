@@ -123,8 +123,9 @@ function AuthPageContent() {
       if (response.ok) {
         const result = await response.json();
         console.log('[Auth] Login exitoso vía API');
-        
-        if (result.session) {
+
+        const session = result?.data?.session;
+        if (session) {
           console.log('[Auth] Login exitoso - sesión establecida en el servidor');
           console.log('[Auth] Iniciando sincronización de sesión...');
 
@@ -136,8 +137,8 @@ function AuthPageContent() {
               console.log('[Auth] Cliente obtenido, llamando setSession...');
               // Lanzar setSession en segundo plano para no bloquear la navegación
               void supabase.auth.setSession({
-                access_token: result.session.access_token,
-                refresh_token: result.session.refresh_token,
+                access_token: session.access_token,
+                refresh_token: session.refresh_token,
               }).then(({ data: setData, error: setError }: AuthResponse) => {
                 console.log('[Auth] setSession resultado:', { setData, setError });
                 if (setError) {
@@ -167,7 +168,7 @@ function AuthPageContent() {
           window.location.replace(dest);
           
         } else {
-          console.warn('[Auth] No se recibió sesión en la respuesta de la API');
+          console.warn('[Auth] No se recibió sesión en la respuesta de la API. Result:', result);
           setError('No se recibió información de sesión');
         }
         return;

@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation'
 import { enviarMensajeDify, enviarImagenDifyConInputArchivo, prepararImagen, type RespuestaDify } from '@/lib/dify'
 import { normalizeCatalogacionData } from '@/lib/aiUtils' // Importar desde un nuevo fichero
 import { guardarConversacion } from '@/lib/supabase'
-import { CatalogacionIASchema, CategoriaObjetoEnum, type CatalogacionIA } from '@/schemas'
+import { CatalogacionIASchema, type CatalogacionIA } from '@/schemas'
 
 // Re-export for backward compatibility
 export type { CatalogacionIA }

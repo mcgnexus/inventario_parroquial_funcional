@@ -1,11 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseServiceClient } from '@/lib/supabaseServer'
-import {
-  ActualizarCatalogacionSchema,
-  UUIDSchema,
-  createErrorResponse,
-  createSuccessResponse,
-} from '@/schemas'
+import { UUIDSchema, createErrorResponse, createSuccessResponse } from '@/schemas'
 import { z } from 'zod'
 
 function toArray(val: unknown): string[] {

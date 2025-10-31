@@ -715,7 +715,7 @@ async function obtenerCatalogoPaginadoDesdeConversaciones(
       query = query.eq('user_id', filtros.user_id)
     }
 
-    const { data, error, count } = await query
+    const { data, error } = await query
 
     if (error) {
       console.error('❌ Error al obtener catálogo paginado:', error)
@@ -772,7 +772,7 @@ async function obtenerCatalogoPaginadoDesdeConversaciones(
             })
           }
         }
-      } catch (e) {
+      } catch {
         // Ignorar filas con JSON inválido
       }
     }
