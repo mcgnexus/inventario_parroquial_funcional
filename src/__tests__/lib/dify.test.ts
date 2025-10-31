@@ -267,8 +267,7 @@ describe('Dify Library', () => {
     it('should compress if file is too large', async () => {
       const largeFile = createMockFile('large.jpg', 15 * 1024 * 1024)
 
-      // Mock comprimirImagen
-      const mockCompressed = createMockFile('compressed.jpg', 8 * 1024 * 1024)
+      // Mock comprimirImagen (se simula vía canvas/toBlob más abajo)
 
       // Necesitamos mockear la función comprimirImagen internamente
       const mockCanvas = {
