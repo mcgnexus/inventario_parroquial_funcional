@@ -84,21 +84,42 @@ export default async function CatalogoPage({
     )
   ).sort()
 
-  // Parroquias únicas
+  // Parroquias únicas (solo nombres, no UUIDs)
   const parroquias = Array.from(
     new Set(
       items
-        .map((i) =>
-          (
-            i.data.parish_name ||
-            (typeof i.data.parish_id === 'string' ? i.data.parish_id : '')
-          ).trim()
-        )
+        .map((i) => {
+          // Priorizar parish_name si existe
+          if (i.data.parish_name && i.data.parish_name.trim()) {
+            return i.data.parish_name.trim()
+          }
+          // Si parish_id parece un UUID, no mostrarlo
+          if (typeof i.data.parish_id === 'string') {
+            const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(i.data.parish_id)
+            if (!isUuid) {
+              return i.data.parish_id.trim()
+            }
+          }
+          return ''
+        })
         .filter(Boolean)
     )
   ).sort()
 
-  const parishHeader = parroquia || (parroquias.length === 1 ? parroquias[0] : '')
+  // Si el parámetro parroquia es un UUID, intentar obtener el nombre
+  let parishHeader = ''
+  if (parroquia) {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(parroquia)
+    if (isUuid) {
+      // Buscar el nombre en los items cargados
+      const itemWithName = items.find(i => i.data.parish_id === parroquia && i.data.parish_name)
+      parishHeader = itemWithName?.data.parish_name || 'Parroquia desconocida'
+    } else {
+      parishHeader = parroquia
+    }
+  } else if (parroquias.length === 1) {
+    parishHeader = parroquias[0]
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-10">

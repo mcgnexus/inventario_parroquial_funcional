@@ -824,6 +824,34 @@ async function obtenerCatalogoPaginadoDesdeItems(
       return null
     }
 
+    // Obtener nombres de parroquias para todos los items
+    const uniqueParishIds = Array.from(new Set(
+      (data || [])
+        .map(row => row.parish_id)
+        .filter((id): id is string => typeof id === 'string' && id.length > 0)
+    ))
+
+    // Consultar nombres de parroquias
+    const parishNames = new Map<string, string>()
+    if (uniqueParishIds.length > 0) {
+      try {
+        const { data: parishes } = await supabase
+          .from('parishes')
+          .select('id, name')
+          .in('id', uniqueParishIds)
+
+        if (parishes) {
+          parishes.forEach((p: { id: string; name: string }) => {
+            if (p.id && p.name) {
+              parishNames.set(p.id, p.name)
+            }
+          })
+        }
+      } catch (e) {
+        console.warn('⚠️ No se pudieron obtener nombres de parroquias:', e)
+      }
+    }
+
     const items: CatalogoItem[] = []
     for (const row of data || []) {
       const parsed = (row.data ?? {}) as Partial<CatalogacionCompleta>
@@ -833,11 +861,16 @@ async function obtenerCatalogoPaginadoDesdeItems(
       const passesRule = hasImage || isApproved || isPublished
 
       if (passesRule && (parsed?.tipo_objeto || parsed?.name)) {
+        // Obtener nombre de parroquia del mapa
+        const parishId = parsed.parish_id ?? row.parish_id
+        const parishName = parishId ? parishNames.get(parishId) : undefined
+
         const merged = {
           ...parsed,
           user_id: row.user_id,
           tipo_objeto: parsed.tipo_objeto ?? parsed.name ?? 'sin_especificar',
-          parish_id: parsed.parish_id ?? row.parish_id,
+          parish_id: parishId,
+          parish_name: parishName || parsed.parish_name, // Usar nombre de BD o fallback
           image_url: parsed.image_url ?? row.image_url,
           inventory_number: parsed.inventory_number ?? row.inventory_number,
           published_at: parsed.published_at ?? row.published_at,
