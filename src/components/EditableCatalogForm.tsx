@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { GUADIX_PARISHES } from '@/data/guadixParishes'
 import type { CatalogImage } from '@/lib/supabase'
+import { generarNumeroInventario } from '@/lib/supabase'
 
 // Definición de opciones visibles y valores internos
 const CATEGORY_OPTIONS = ['Pintura','Escultura','Talla','Orfebreria','Ornamentos','Telas','Mobiliario','Documentos','Otros']
@@ -166,6 +167,30 @@ export default function EditableCatalogForm({ id, initialData, onSaveSuccess }: 
     }
     loadAll()
   }, [mergeParishes])
+
+  // Efecto para generar automáticamente el número de inventario
+  useEffect(() => {
+    const parish_input = parishSelection || parishManual || ''
+
+    // Solo generar si tenemos parroquia, tipo de objeto, y no hay número de inventario
+    if (parish_input && tipoObjeto && (!inventoryNumber || inventoryNumber.trim() === '')) {
+      // Verificar si parish_input es un UUID (de la selección) o un nombre manual
+      const isUuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(parish_input)
+
+      if (isUuidPattern) {
+        // Es un UUID, podemos generar el número
+        generarNumeroInventario(parish_input, tipoObjeto)
+          .then(numeroGenerado => {
+            if (numeroGenerado) {
+              setInventoryNumber(numeroGenerado)
+            }
+          })
+          .catch(error => {
+            console.error('Error al generar número de inventario:', error)
+          })
+      }
+    }
+  }, [parishSelection, parishManual, tipoObjeto, inventoryNumber])
 
   // Buscar sin tildes y seleccionar la primera coincidencia, manteniendo todo el listado
   useEffect(() => {

@@ -194,8 +194,89 @@ export async function subirImagen(
 }
 
 /**
+ * Genera el código de 3 letras para una parroquia a partir de su nombre.
+ * Toma las 3 primeras letras de las palabras significativas del nombre.
+ * Ejemplo: "Santa María la Mayor" -> "SMM"
+ * @param parishName - El nombre de la parroquia.
+ * @returns El código de 3 letras en mayúsculas.
+ */
+export function generarCodigoParroquia(parishName: string): string {
+  // Palabras que se deben ignorar (artículos, preposiciones, conectores)
+  const stopWords = ['de', 'la', 'el', 'los', 'las', 'y', 'en', 'del', 'al', 'a']
+
+  // Normalizar: quitar tildes y convertir a minúsculas
+  const normalize = (str: string) =>
+    str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+
+  // Dividir en palabras y normalizar cada una
+  const palabras = parishName
+    .split(' ')
+    .filter(word => word.length > 0)
+
+  // Filtrar palabras significativas (no stopwords)
+  const palabrasSignificativas = palabras
+    .filter(word => !stopWords.includes(normalize(word)))
+
+  // Tomar las primeras letras de las palabras significativas
+  let codigo = palabrasSignificativas
+    .map(word => word.charAt(0).toUpperCase())
+    .join('')
+
+  // Si no hay suficientes palabras significativas, tomar las primeras letras de todas las palabras
+  if (codigo.length < 3) {
+    codigo = palabras
+      .map(word => word.charAt(0).toUpperCase())
+      .join('')
+  }
+
+  // Asegurar exactamente 3 letras
+  return codigo.substring(0, 3).padEnd(3, 'X')
+}
+
+/**
+ * Genera el código de 3 letras para un tipo de objeto.
+ * Ejemplo: "Orfebrería" -> "ORF"
+ * @param tipoObjeto - El tipo de objeto.
+ * @returns El código de 3 letras en mayúsculas.
+ */
+export function generarCodigoObjeto(tipoObjeto: string): string {
+  // Normalizar y quitar tildes
+  const normalize = (str: string) =>
+    str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()
+
+  const normalizado = normalize(tipoObjeto)
+
+  // Mapeo de tipos comunes a códigos específicos
+  const mapeoTipos: Record<string, string> = {
+    'ORFEBRERIA': 'ORF',
+    'PINTURA': 'PIN',
+    'ESCULTURA': 'ESC',
+    'TALLA': 'TAL',
+    'ORNAMENTOS': 'ORN',
+    'TELAS': 'TEL',
+    'MOBILIARIO': 'MOB',
+    'DOCUMENTOS': 'DOC',
+    'OTROS': 'OTR'
+  }
+
+  // Si existe mapeo, usarlo
+  if (mapeoTipos[normalizado]) {
+    return mapeoTipos[normalizado]
+  }
+
+  // Si no, tomar las 3 primeras letras
+  return normalizado.substring(0, 3).padEnd(3, 'X')
+}
+
+/**
  * Genera un número de inventario único para una parroquia.
  * Formato: XXX-YYYY-OOO-NNNN
+ * Donde:
+ * - XXX: Código de 3 letras de la parroquia (primeras letras de palabras significativas)
+ * - YYYY: Año de catalogación
+ * - OOO: Código de 3 letras del tipo de objeto
+ * - NNNN: Número secuencial único para cada parroquia (4 dígitos)
+ *
  * @param parishId - El UUID de la parroquia.
  * @param tipoObjeto - El tipo de objeto (e.g., 'orfebrería').
  * @returns El número de inventario generado o null si hay un error.
@@ -214,24 +295,16 @@ export async function generarNumeroInventario(
       return null
     }
 
-    const stopWords = ['de', 'la', 'el', 'los', 'las', 'y', 'en', 'del']
-    const parishCode = parishName
-      .toLowerCase()
-      .split(' ')
-      .filter(word => !stopWords.includes(word))
-      .map(word => word.charAt(0))
-      .join('')
-      .substring(0, 3)
-      .toUpperCase()
-      .padEnd(3, 'X') // Rellena si tiene menos de 3 letras
+    const parishCode = generarCodigoParroquia(parishName)
 
     // 2. Obtener el año actual (YYYY)
     const year = new Date().getFullYear()
 
     // 3. Obtener el código del tipo de objeto (OOO)
-    const objectCode = tipoObjeto.substring(0, 3).toUpperCase()
+    const objectCode = generarCodigoObjeto(tipoObjeto)
 
     // 4. Obtener el número secuencial para esa parroquia (NNNN)
+    // Cuenta todos los items de esta parroquia para generar el siguiente número
     const { count, error } = await supabase
       .from('items')
       .select('*', { count: 'exact', head: true })

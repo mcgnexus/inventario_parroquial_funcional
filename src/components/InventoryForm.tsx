@@ -1,9 +1,10 @@
 'use client'
 
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { Edit, Save, X, ShieldCheck, FileText, Loader2, ChevronDown, ChevronRight } from 'lucide-react'
 import ParishSelector from './ParishSelector'
 import type { CatalogacionIA } from '@/hooks/useInventory'
+import { generarNumeroInventario } from '@/lib/supabase'
 
 interface InventoryFormProps {
   catalogacion: CatalogacionIA
@@ -165,6 +166,25 @@ export default function InventoryForm({
   })
 
   const datos = estaEditando ? catalogacionEditada || catalogacion : catalogacion
+
+  // Efecto para generar automáticamente el número de inventario
+  useEffect(() => {
+    // Solo generar si estamos editando y tenemos parroquia y tipo de objeto
+    if (estaEditando && datos.parish_id && datos.tipo_objeto) {
+      // Solo generar si no hay número de inventario o está vacío
+      if (!datos.inventory_number || datos.inventory_number.trim() === '') {
+        generarNumeroInventario(datos.parish_id, datos.tipo_objeto)
+          .then(numeroGenerado => {
+            if (numeroGenerado) {
+              onActualizarCampo('inventory_number', numeroGenerado)
+            }
+          })
+          .catch(error => {
+            console.error('Error al generar número de inventario:', error)
+          })
+      }
+    }
+  }, [estaEditando, datos.parish_id, datos.tipo_objeto, datos.inventory_number, onActualizarCampo])
 
   const toggleSeccion = (seccion: keyof typeof seccionVisible) => {
     setSeccionVisible((prev) => ({
