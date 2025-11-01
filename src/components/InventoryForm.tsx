@@ -169,20 +169,39 @@ export default function InventoryForm({
 
   // Efecto para generar automáticamente el número de inventario
   useEffect(() => {
+    console.log('🔍 InventoryForm - Verificando generación de número:', {
+      estaEditando,
+      parish_id: datos.parish_id,
+      tipo_objeto: datos.tipo_objeto,
+      inventory_number: datos.inventory_number
+    })
+
     // Solo generar si estamos editando y tenemos parroquia y tipo de objeto
     if (estaEditando && datos.parish_id && datos.tipo_objeto) {
       // Solo generar si no hay número de inventario o está vacío
       if (!datos.inventory_number || datos.inventory_number.trim() === '') {
+        console.log('✅ Generando número de inventario...')
         generarNumeroInventario(datos.parish_id, datos.tipo_objeto)
           .then(numeroGenerado => {
             if (numeroGenerado) {
+              console.log('✅ Número generado:', numeroGenerado)
               onActualizarCampo('inventory_number', numeroGenerado)
+            } else {
+              console.warn('⚠️ No se pudo generar número de inventario')
             }
           })
           .catch(error => {
-            console.error('Error al generar número de inventario:', error)
+            console.error('❌ Error al generar número de inventario:', error)
           })
+      } else {
+        console.log('ℹ️ Ya existe número de inventario:', datos.inventory_number)
       }
+    } else {
+      console.log('⚠️ Faltan datos para generar número:', {
+        estaEditando,
+        tiene_parish: !!datos.parish_id,
+        tiene_tipo: !!datos.tipo_objeto
+      })
     }
   }, [estaEditando, datos.parish_id, datos.tipo_objeto, datos.inventory_number, onActualizarCampo])
 

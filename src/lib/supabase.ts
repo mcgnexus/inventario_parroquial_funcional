@@ -285,40 +285,58 @@ export async function generarNumeroInventario(
   parishId: string,
   tipoObjeto: string
 ): Promise<string | null> {
-  if (!supabase) return null
+  console.log('🔢 generarNumeroInventario llamado con:', { parishId, tipoObjeto })
+
+  if (!supabase) {
+    console.error('❌ Supabase no está configurado')
+    return null
+  }
 
   try {
     // 1. Obtener el nombre de la parroquia para el código XXX
+    console.log('📍 Obteniendo nombre de parroquia...')
     const parishName = await obtenerParroquiaNombre(parishId)
     if (!parishName) {
-      console.error(`No se encontró el nombre para la parroquia con ID: ${parishId}`)
+      console.error(`❌ No se encontró el nombre para la parroquia con ID: ${parishId}`)
       return null
     }
+    console.log('✅ Nombre de parroquia:', parishName)
 
     const parishCode = generarCodigoParroquia(parishName)
+    console.log('✅ Código de parroquia:', parishCode)
 
     // 2. Obtener el año actual (YYYY)
     const year = new Date().getFullYear()
+    console.log('📅 Año:', year)
 
     // 3. Obtener el código del tipo de objeto (OOO)
     const objectCode = generarCodigoObjeto(tipoObjeto)
+    console.log('🎨 Código de objeto:', objectCode)
 
     // 4. Obtener el número secuencial para esa parroquia (NNNN)
     // Cuenta todos los items de esta parroquia para generar el siguiente número
+    console.log('🔍 Contando items en la parroquia...')
     const { count, error } = await supabase
       .from('items')
       .select('*', { count: 'exact', head: true })
       .eq('parish_id', parishId)
 
-    if (error) throw error
+    if (error) {
+      console.error('❌ Error al contar items:', error)
+      throw error
+    }
 
+    console.log('📊 Items encontrados:', count)
     const nextNumber = (count ?? 0) + 1
     const sequentialNumber = String(nextNumber).padStart(4, '0')
+    console.log('🔢 Número secuencial:', sequentialNumber)
 
-    return `${parishCode}-${year}-${objectCode}-${sequentialNumber}`
+    const numeroFinal = `${parishCode}-${year}-${objectCode}-${sequentialNumber}`
+    console.log('✅ Número de inventario generado:', numeroFinal)
+    return numeroFinal
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e)
-    console.error('Error al generar número de inventario:', msg)
+    console.error('❌ Error al generar número de inventario:', msg, e)
     return null
   }
 }
