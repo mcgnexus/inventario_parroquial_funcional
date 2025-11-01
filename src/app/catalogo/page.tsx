@@ -134,8 +134,11 @@ export default async function CatalogoPage({
           <Suspense fallback={null}>
             <CatalogoUserFilter />
           </Suspense>
-          <Link href="/" className="text-sm text-slate-600 hover:text-slate-800">
-            Volver
+          <Link
+            href="/inventario"
+            className="px-4 py-2 bg-amber-600 text-white text-sm font-medium rounded-md hover:bg-amber-700 transition-colors shadow-sm"
+          >
+            + Insertar otra pieza
           </Link>
         </div>
       </div>
