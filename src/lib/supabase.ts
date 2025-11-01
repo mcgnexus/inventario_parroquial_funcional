@@ -193,6 +193,63 @@ export async function subirImagen(
   }
 }
 
+/**
+ * Genera un número de inventario único para una parroquia.
+ * Formato: XXX-YYYY-OOO-NNNN
+ * @param parishId - El UUID de la parroquia.
+ * @param tipoObjeto - El tipo de objeto (e.g., 'orfebrería').
+ * @returns El número de inventario generado o null si hay un error.
+ */
+export async function generarNumeroInventario(
+  parishId: string,
+  tipoObjeto: string
+): Promise<string | null> {
+  if (!supabase) return null
+
+  try {
+    // 1. Obtener el nombre de la parroquia para el código XXX
+    const parishName = await obtenerParroquiaNombre(parishId)
+    if (!parishName) {
+      console.error(`No se encontró el nombre para la parroquia con ID: ${parishId}`)
+      return null
+    }
+
+    const stopWords = ['de', 'la', 'el', 'los', 'las', 'y', 'en', 'del']
+    const parishCode = parishName
+      .toLowerCase()
+      .split(' ')
+      .filter(word => !stopWords.includes(word))
+      .map(word => word.charAt(0))
+      .join('')
+      .substring(0, 3)
+      .toUpperCase()
+      .padEnd(3, 'X') // Rellena si tiene menos de 3 letras
+
+    // 2. Obtener el año actual (YYYY)
+    const year = new Date().getFullYear()
+
+    // 3. Obtener el código del tipo de objeto (OOO)
+    const objectCode = tipoObjeto.substring(0, 3).toUpperCase()
+
+    // 4. Obtener el número secuencial para esa parroquia (NNNN)
+    const { count, error } = await supabase
+      .from('items')
+      .select('*', { count: 'exact', head: true })
+      .eq('parish_id', parishId)
+
+    if (error) throw error
+
+    const nextNumber = (count ?? 0) + 1
+    const sequentialNumber = String(nextNumber).padStart(4, '0')
+
+    return `${parishCode}-${year}-${objectCode}-${sequentialNumber}`
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e)
+    console.error('Error al generar número de inventario:', msg)
+    return null
+  }
+}
+
 export async function guardarCatalogacion(
   userId: string,
   catalogo: CatalogacionCompleta,
@@ -216,13 +273,22 @@ export async function guardarCatalogacion(
       return { error: 'No se puede aprobar sin fotografía adjunta.' }
     }
 
+    // Generar número de inventario si no existe y tenemos parish_id
+    let inventoryNumber = catalogo.inventory_number
+    if (!inventoryNumber && catalogo.parish_id) {
+      // generarNumeroInventario devuelve string | null; normalizamos null a undefined
+      inventoryNumber = (await generarNumeroInventario(catalogo.parish_id, catalogo.tipo_objeto)) ?? undefined
+    }
+
     const jsonRespuesta = {
       ...catalogo,
       image_url: imageUrl,
       image_path: imagePath,
       published_at: new Date().toISOString(),
       approved_at: new Date().toISOString(),
-      status: 'approved'
+      status: 'approved',
+      // Asegurarnos de que el número de inventario se guarda
+      inventory_number: inventoryNumber,
     }
 
     const { data, error } = await supabase
