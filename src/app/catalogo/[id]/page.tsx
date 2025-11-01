@@ -46,9 +46,19 @@ const nextItem = currentIndexFiltered >= 0 && currentIndexFiltered < filtrados.l
   const queryString = qsParts.length ? `?${qsParts.join('&')}` : ''
   const d = item.data
   const isUuid = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str)
-  const parishName = (typeof d.parish_id === 'string' && isUuid(d.parish_id))
-    ? await obtenerParroquiaNombre(d.parish_id)
-    : (d.parish_name || (typeof d.parish_id === 'string' ? d.parish_id : null))
+
+  // Obtener nombre de parroquia con manejo de errores
+  let parishName: string | null = null
+  if (typeof d.parish_id === 'string' && isUuid(d.parish_id)) {
+    parishName = await obtenerParroquiaNombre(d.parish_id)
+    // Si no se encontró la parroquia, mostrar mensaje amigable
+    if (!parishName) {
+      parishName = 'Parroquia no registrada'
+    }
+  } else {
+    // Usar parish_name si existe, o el parish_id si es texto, o null
+    parishName = d.parish_name || (typeof d.parish_id === 'string' ? d.parish_id : null)
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-10 print-container relative">

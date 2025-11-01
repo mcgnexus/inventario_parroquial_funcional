@@ -675,17 +675,35 @@ export async function obtenerParroquiaNombre(parishId: string): Promise<string |
     return null
   }
   try {
+    console.log('🔍 Buscando parroquia con ID:', parishId)
     const { data, error } = await supabase
       .from('parishes')
-      .select('name')
+      .select('name, location')
       .eq('id', parishId)
       .limit(1)
+
     if (error) {
       console.error('❌ Error al obtener nombre de parroquia:', error)
       return null
     }
-    const row = data?.[0] as { name?: string } | undefined
-    return row?.name ?? null
+
+    console.log('📊 Resultado de la búsqueda:', data)
+
+    if (!data || data.length === 0) {
+      console.warn(`⚠️ No se encontró ninguna parroquia con el UUID: ${parishId}`)
+      console.warn('💡 Posibles causas:')
+      console.warn('   1. La parroquia no existe en la base de datos')
+      console.warn('   2. El UUID es incorrecto')
+      console.warn('   3. La tabla parishes está vacía')
+      console.warn('📝 Ejecuta este SQL para verificar:')
+      console.warn(`   SELECT * FROM parishes WHERE id = '${parishId}';`)
+      return null
+    }
+
+    const row = data[0] as { name?: string; location?: string } | undefined
+    const fullName = row?.name ?? null
+    console.log(`✅ Parroquia encontrada: ${fullName} (${row?.location || 'sin ubicación'})`)
+    return fullName
   } catch (error) {
     console.error('❌ Error inesperado al obtener nombre de parroquia:', error)
     return null

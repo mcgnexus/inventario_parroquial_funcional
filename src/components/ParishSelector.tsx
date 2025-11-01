@@ -97,10 +97,24 @@ export default function ParishSelector({
   }, [parishSearch, parishOptions])
 
   const handleSelectionChange = (selectedId: string) => {
+    console.log('🏛️ ParishSelector - Selección cambiada:', selectedId)
     setParishSelection(selectedId)
     const selected = parishOptions.find((o) => o.id === selectedId)
     if (selected) {
-      onChange(isUuid(selected.id) ? selected.id : selected.name)
+      const valueToSend = isUuid(selected.id) ? selected.id : ''
+      console.log('🏛️ ParishSelector - Enviando valor:', {
+        selectedId: selected.id,
+        isUuid: isUuid(selected.id),
+        valueToSend,
+        name: selected.name
+      })
+      // Solo enviar si es un UUID válido, de lo contrario enviar string vacío
+      if (valueToSend) {
+        onChange(valueToSend)
+      } else {
+        console.warn('⚠️ ParishSelector - La parroquia no tiene un UUID válido, enviando vacío')
+        onChange('')
+      }
     }
   }
 
@@ -126,13 +140,28 @@ export default function ParishSelector({
         className="mt-2 w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white disabled:bg-slate-100 disabled:cursor-not-allowed"
       >
         <option value="">Selecciona parroquia (Guadix)</option>
-        {parishOptions.map((opt) => (
-          <option key={opt.id} value={opt.id}>
-            {opt.name}
-            {opt.location ? ` — ${opt.location}` : ''}
-          </option>
-        ))}
+        {parishOptions.map((opt) => {
+          const hasValidUuid = isUuid(opt.id)
+          return (
+            <option
+              key={opt.id}
+              value={opt.id}
+              disabled={!hasValidUuid}
+              style={!hasValidUuid ? { color: '#94a3b8', fontStyle: 'italic' } : undefined}
+            >
+              {opt.name}
+              {opt.location ? ` — ${opt.location}` : ''}
+              {!hasValidUuid ? ' (No disponible - sin registro en BD)' : ''}
+            </option>
+          )
+        })}
       </select>
+
+      {parishSelection && !isUuid(parishSelection) && (
+        <p className="mt-1 text-xs text-amber-600">
+          ⚠️ Esta parroquia no está registrada en la base de datos. Selecciona una con UUID válido para generar el número de inventario.
+        </p>
+      )}
     </div>
   )
 }
