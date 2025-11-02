@@ -2,13 +2,14 @@ import { describe, it, expect } from 'vitest'
 import {
   CatalogacionIASchema,
   CatalogacionCompletaSchema,
-  CrearCatalogacionSchema,
-  ActualizarCatalogacionSchema,
   FiltrosCatalogacionSchema,
   CategoriaObjetoEnum,
   EstadoConservacionEnum,
   StatusEnum,
 } from '@/schemas/catalogacion.schema'
+
+// Note: CrearCatalogacionSchema y ActualizarCatalogacionSchema están disponibles
+// pero no se usan en estos tests. Se pueden añadir tests específicos en el futuro.
 
 describe('Catalogacion Schemas', () => {
   describe('CatalogacionIASchema', () => {

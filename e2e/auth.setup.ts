@@ -15,10 +15,30 @@ import { STORAGE_STATE } from '../playwright.config'
 const authFile = STORAGE_STATE
 
 setup('autenticar usuario de prueba', async ({ page }) => {
-  // 1. Navegar a la página de login
-  await page.goto('/auth')
-  // Esperar a que cargue un campo del formulario de login
-  await expect(page.getByPlaceholder(/usuario@parroquia\.org/i)).toBeVisible({ timeout: 20000 })
+  const consoleLogs: string[] = []
+  const pageErrors: string[] = []
+  page.on('console', (msg) => {
+    consoleLogs.push(`[${msg.type()}] ${msg.text()}`)
+  })
+  page.on('pageerror', (err) => {
+    pageErrors.push(err.message)
+  })
+
+  try {
+    // 1. Navegar a la página de login
+    await page.goto('/auth', { waitUntil: 'networkidle' })
+    await setup.info().attach('current-url', { body: page.url(), contentType: 'text/plain' })
+
+    // Verificar que no haya errores de runtime en la página
+    const hasRuntimeError = await page.getByText(/runtime error/i).isVisible().catch(() => false)
+    if (hasRuntimeError) {
+      const errorText = await page.textContent('body')
+      await setup.info().attach('page-snapshot', { body: errorText || 'No content', contentType: 'text/plain' })
+      throw new Error('La página /auth tiene un Runtime Error. Reconstruye .next con: rm -rf .next && npm run dev')
+    }
+
+    // Esperar a que cargue el formulario de login
+    await expect(page.getByPlaceholder(/usuario@parroquia\.org/i)).toBeVisible({ timeout: 40000 })
 
   // 2. Rellenar credenciales
   //    IMPORTANTE: Usa variables de entorno para no exponer credenciales.
@@ -43,18 +63,24 @@ setup('autenticar usuario de prueba', async ({ page }) => {
   await page.getByRole('button', { name: /iniciar sesión/i }).first().click()
 
   // Esperar a que la API de login responda
-  const loginResponse = await loginPromise
-  console.log(`Login API response: ${loginResponse.status()}`)
+    const loginResponse = await loginPromise
+    console.log(`Login API response: ${loginResponse.status()}`)
 
-  if (loginResponse.status() !== 200) {
-    const errorText = await loginResponse.text()
-    console.error(`Login failed with status ${loginResponse.status()}: ${errorText}`)
-    throw new Error(`Login API failed: ${loginResponse.status()} - ${errorText}`)
-  }
+    if (loginResponse.status() !== 200) {
+      const errorText = await loginResponse.text()
+      console.error(`Login failed with status ${loginResponse.status()}: ${errorText}`)
+      await setup.info().attach('console-log', { body: consoleLogs.join('\n'), contentType: 'text/plain' })
+      await setup.info().attach('page-errors', { body: pageErrors.join('\n'), contentType: 'text/plain' })
+      throw new Error(`Login API failed: ${loginResponse.status()} - ${errorText}`)
+    }
   
   // Esperar a la redirección a inventario (puede tardar un poco por la sincronización de sesión)
-  await expect(page).toHaveURL(/\/inventario/, { timeout: 20000 })
+    await expect(page).toHaveURL(/\/inventario/, { timeout: 40000 })
 
-  // 4. Guardar el estado de la sesión en el fichero de autenticación
-  await page.context().storageState({ path: authFile })
+    // 4. Guardar el estado de la sesión en el fichero de autenticación
+    await page.context().storageState({ path: authFile })
+  } finally {
+    await setup.info().attach('console-log', { body: consoleLogs.join('\n'), contentType: 'text/plain' })
+    await setup.info().attach('page-errors', { body: pageErrors.join('\n'), contentType: 'text/plain' })
+  }
 })

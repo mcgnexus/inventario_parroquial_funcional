@@ -810,7 +810,6 @@ async function obtenerCatalogoPaginadoDesdeItems(
     // Paginación
     query = query.range(offset, offset + perPage - 1)
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { data, error, count } = await query as unknown as {
       data: ItemRow[] | null
       error: unknown
@@ -897,7 +896,6 @@ async function obtenerCatalogoPaginadoDesdeItems(
       perPage,
       totalPages,
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e)
     console.warn('⚠️ Error al obtener catálogo paginado desde items:', msg)

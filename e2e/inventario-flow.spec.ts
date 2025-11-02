@@ -117,11 +117,14 @@ test.describe('Flujo Completo de Inventario', () => {
     test('debe mostrar mensaje si no hay items', async ({ page }) => {
       await page.goto('/catalogo')
 
-      // Si no hay items, debería mostrar mensaje
-      const noItems = page.getByText(/No hay elementos/i)
+      // Verificar que la página de catálogo carga correctamente
+      // Si no hay items, debería mostrar mensaje "No hay elementos"
+      // Si hay items, debería mostrar la lista
+      const hasNoItemsMessage = await page.getByText(/No hay elementos/i).isVisible().catch(() => false)
+      const hasItemsGrid = await page.locator('.grid').isVisible().catch(() => false)
 
-      // Este test es condicional: si hay items, no aparece
-      // En un test real, necesitarías datos de prueba garantizados
+      // Al menos uno de los dos debe estar visible
+      expect(hasNoItemsMessage || hasItemsGrid).toBeTruthy()
     })
   })
 

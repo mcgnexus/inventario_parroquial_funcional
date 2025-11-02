@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Configuración de imágenes
   images: {
     remotePatterns: [
       {
@@ -12,6 +13,8 @@ const nextConfig: NextConfig = {
     ],
     qualities: [25, 50, 75, 80, 90, 100],
   },
+
+  // Headers personalizados
   async headers() {
     return [
       {
@@ -22,6 +25,10 @@ const nextConfig: NextConfig = {
       },
     ]
   },
+
+  // Configuración para resolver el warning de múltiples lockfiles
+  // Especifica la raíz del proyecto para el output file tracing
+  outputFileTracingRoot: undefined, // Next.js usará el directorio actual como raíz
 };
 
 export default nextConfig;
