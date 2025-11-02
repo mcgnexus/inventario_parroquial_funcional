@@ -1,5 +1,19 @@
 import { defineConfig, devices } from '@playwright/test'
 import path from 'path'
+import fs from 'fs'
+import dotenv from 'dotenv'
+
+// Cargar variables de entorno para Playwright (prioridad: .env.test.local -> .env.local -> .env)
+(() => {
+  const candidates = ['.env.test.local', '.env.local', '.env']
+  for (const fname of candidates) {
+    const filePath = path.join(__dirname, fname)
+    if (fs.existsSync(filePath)) {
+      dotenv.config({ path: filePath })
+      break
+    }
+  }
+})()
 
 export const STORAGE_STATE = path.join(__dirname, 'playwright/.auth/user.json')
 
