@@ -9,7 +9,8 @@
       "Bash(npm run test:e2e:*)",
       "Bash(node:*)",
       "Bash(netstat:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(npm run lint)"
     ],
     "deny": [],
     "ask": []

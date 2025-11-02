@@ -1,5 +1,4 @@
 import { test as setup, expect } from '@playwright/test'
-import type { Response } from 'playwright-core'
 import { STORAGE_STATE } from '../playwright.config'
 import fs from 'fs'
 import path from 'path'
