@@ -1,5 +1,8 @@
 import { test as setup, expect } from '@playwright/test'
+import type { Response } from 'playwright-core'
 import { STORAGE_STATE } from '../playwright.config'
+import fs from 'fs'
+import path from 'path'
 
 /**
  * Fichero de autenticación para Playwright.
@@ -41,9 +44,11 @@ setup('autenticar usuario de prueba', async ({ page }) => {
     // Esperar a que se estabilice en uno de los dos estados: formulario de login o sesión visible
     const authFormVisible = await page.getByPlaceholder(/usuario@parroquia\.org/i).isVisible({ timeout: 8000 }).catch(() => false)
     const sessionVisible = await page.getByRole('button', { name: /salir/i }).isVisible({ timeout: 8000 }).catch(() => false)
+    const sessionTextVisible = await page.getByText(/sesión:/i).isVisible({ timeout: 8000 }).catch(() => false)
 
-    if (sessionVisible && !authFormVisible) {
+    if ((sessionVisible || sessionTextVisible) && !authFormVisible) {
       // Ya autenticado, guardar estado y salir
+      await fs.promises.mkdir(path.dirname(authFile), { recursive: true })
       await page.context().storageState({ path: authFile })
       return
     }
@@ -52,7 +57,9 @@ setup('autenticar usuario de prueba', async ({ page }) => {
       await page.goto('/auth?mode=login', { waitUntil: 'domcontentloaded' })
       const forcedFormVisible = await page.getByPlaceholder(/usuario@parroquia\.org/i).isVisible({ timeout: 8000 }).catch(() => false)
       const nowSessionVisible = await page.getByRole('button', { name: /salir/i }).isVisible({ timeout: 8000 }).catch(() => false)
-      if (nowSessionVisible && !forcedFormVisible) {
+      const nowSessionTextVisible = await page.getByText(/sesión:/i).isVisible({ timeout: 8000 }).catch(() => false)
+      if ((nowSessionVisible || nowSessionTextVisible) && !forcedFormVisible) {
+        await fs.promises.mkdir(path.dirname(authFile), { recursive: true })
         await page.context().storageState({ path: authFile })
         return
       }
@@ -78,11 +85,6 @@ setup('autenticar usuario de prueba', async ({ page }) => {
   await page.getByPlaceholder(/\u2022{8}/).fill(password)
 
   // 3. Hacer click en el botón de login y esperar a señales de éxito
-  const endpointMatcher = (response: import('@playwright/test').APIResponse) => {
-    const url = response.url()
-    const ok = /\/api\/auth\/login(\?.*)?$/i.test(url) || url.includes('/api/auth/login')
-    return ok
-  }
 
   // Click en el botón de envío del formulario de login (evitar el tab selector)
   let clicked = false
@@ -97,32 +99,22 @@ setup('autenticar usuario de prueba', async ({ page }) => {
   }
 
   // Esperar una de las siguientes condiciones:
-  // - Respuesta de la API de login
   // - La URL cambia al inventario
+  // - Aparece sesión visible en la home (texto o botón "Salir")
   // - Aparece un mensaje de error visible
-  const responsePromise = page.waitForResponse(endpointMatcher, { timeout: 25000 }).catch(() => null)
   const urlInventarioPromise = page.waitForURL(/\/inventario/, { timeout: 30000 }).catch(() => null)
   const homeSessionPromise = page.getByText(/sesión:\s*playwright-user@example\.com/i).isVisible({ timeout: 30000 }).catch(() => false)
   const logoutVisiblePromise = page.getByRole('button', { name: /salir/i }).isVisible({ timeout: 30000 }).catch(() => false)
   const errorPromise = page.getByText(/(email|contraseña|servidor|supabase|incorrectos|comunicación)/i).isVisible({ timeout: 30000 }).catch(() => false)
 
-  const [resp, urlChangedInventario, homeSessionVisible, logoutVisible, errorVisible] = await Promise.all([responsePromise, urlInventarioPromise, homeSessionPromise, logoutVisiblePromise, errorPromise])
+  const [urlChangedInventario, homeSessionVisible, logoutVisible, errorVisible] = await Promise.all([urlInventarioPromise, homeSessionPromise, logoutVisiblePromise, errorPromise])
 
-  if (resp) {
-    console.log(`Login API response: ${resp.status()}`)
-    if (resp.status() !== 200) {
-      const errorText = await resp.text()
-      console.error(`Login failed with status ${resp.status()}: ${errorText}`)
-      await setup.info().attach('console-log', { body: consoleLogs.join('\n'), contentType: 'text/plain' })
-      await setup.info().attach('page-errors', { body: pageErrors.join('\n'), contentType: 'text/plain' })
-      throw new Error(`Login API failed: ${resp.status()} - ${errorText}`)
-    }
-  }
   const loginSuccess = Boolean(urlChangedInventario || homeSessionVisible || logoutVisible)
-  if (!resp && !loginSuccess && !errorVisible) {
+  if (!loginSuccess && !errorVisible) {
+    await setup.info().attach('current-url', { body: page.url(), contentType: 'text/plain' })
     await setup.info().attach('console-log', { body: consoleLogs.join('\n'), contentType: 'text/plain' })
     await setup.info().attach('page-errors', { body: pageErrors.join('\n'), contentType: 'text/plain' })
-    throw new Error('No se detectó respuesta de login, redirección ni mensaje de error en el tiempo esperado')
+    throw new Error('No se detectó redirección ni mensaje de error en el tiempo esperado')
   }
   
   // Esperar a la redirección a inventario (puede tardar un poco por la sincronización de sesión)
@@ -137,6 +129,7 @@ setup('autenticar usuario de prueba', async ({ page }) => {
     }
 
     // 4. Guardar el estado de la sesión en el fichero de autenticación
+    await fs.promises.mkdir(path.dirname(authFile), { recursive: true })
     await page.context().storageState({ path: authFile })
   } finally {
     await setup.info().attach('console-log', { body: consoleLogs.join('\n'), contentType: 'text/plain' })
