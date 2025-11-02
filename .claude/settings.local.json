@@ -10,7 +10,9 @@
       "Bash(node:*)",
       "Bash(netstat:*)",
       "Bash(findstr:*)",
-      "Bash(npm run lint)"
+      "Bash(npm run lint)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
