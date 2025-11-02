@@ -159,7 +159,7 @@ export default async function CatalogoPage({
             href="/inventario"
             className="px-4 py-2 bg-amber-600 text-white text-sm font-medium rounded-md hover:bg-amber-700 transition-colors shadow-sm"
           >
-            + Insertar otra pieza
+            Añadir nueva pieza
           </Link>
         </div>
       </div>
