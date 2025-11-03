@@ -323,10 +323,7 @@ export async function generarNumeroInventario(
     // 1. Obtener el nombre y localidad de la parroquia para el código XXX
     console.log('�� Obteniendo nombre y localidad de parroquia...')
     const { data, error } = await supabase
-      .from('parishes')
-      .select('name, location')
-      .eq('id', parishId)
-      .limit(1)
+      .rpc('get_parish_info', { parish_uuid: parishId })
 
     if (error) {
       console.error('❌ Error al obtener parroquia:', error)

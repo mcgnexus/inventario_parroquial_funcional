@@ -12,7 +12,9 @@
       "Bash(findstr:*)",
       "Bash(npm run lint)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(rm:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
