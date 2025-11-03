@@ -299,10 +299,10 @@ export default async function CatalogoPage({
               <Card
                 key={it.id}
                 id={`item-${it.id}`}
-                className="group overflow-hidden hover:shadow-lg transition-all duration-300"
+                className="group overflow-hidden hover:shadow-lg transition-all duration-300 relative"
               >
                 <Link href={`/catalogo/${it.id}${queryString}`} className="block">
-                  <div className="aspect-[4/3] bg-muted overflow-hidden relative">
+                  <div className="aspect-[4/3] bg-muted overflow-hidden">
                     <OptimizedImage
                       src={it.data.image_url}
                       alt={it.data.descripcion_breve || it.data.tipo_objeto}
@@ -314,14 +314,6 @@ export default async function CatalogoPage({
                       containerClassName="w-full h-full"
                       fallbackText="Sin imagen"
                     />
-                    <a
-                      href={`/catalogo/${it.id}${queryString}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="absolute top-2 right-2 bg-background/95 border rounded-md p-2 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                    </a>
                   </div>
                   <CardHeader>
                     <CardTitle className="text-base line-clamp-2">
@@ -332,6 +324,15 @@ export default async function CatalogoPage({
                     </CardDescription>
                   </CardHeader>
                 </Link>
+                <a
+                  href={`/catalogo/${it.id}${queryString}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="absolute top-2 right-2 bg-background/95 border rounded-md p-2 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                  aria-label="Abrir en nueva pestaña"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </a>
               </Card>
             ))}
           </div>
