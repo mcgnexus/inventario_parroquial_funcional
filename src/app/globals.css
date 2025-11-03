@@ -1,28 +1,74 @@
 @import "tailwindcss";
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
+    /* shadcn/ui Design Tokens - Paleta Litúrgica */
+    --background: 40 10% 98%; /* Pergamino suave (stone-50) */
+    --foreground: 215 25% 27%; /* Texto principal oscuro (slate-800) */
+
+    --card: 0 0% 100%; /* Blanco puro para tarjetas */
+    --card-foreground: 215 25% 27%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 25% 27%;
+
+    /* Oro Litúrgico (Amber) - Color primario */
+    --primary: 32 95% 44%; /* Oro eclesiástico (amber-600) */
+    --primary-foreground: 0 0% 100%; /* Blanco sobre oro */
+
+    /* Púrpura Episcopal (Violet) - Color secundario */
+    --secondary: 258 90% 66%; /* Púrpura eclesiástico (violet-500) */
+    --secondary-foreground: 0 0% 100%;
+
+    /* Azul María - Color acento */
+    --accent: 217 91% 60%; /* Azul Mariano (blue-500) */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%; /* Rojo para acciones destructivas */
+    --destructive-foreground: 0 0% 100%;
+
+    --muted: 215 20% 95%; /* Gris suave para fondos (slate-100) */
+    --muted-foreground: 215 16% 47%; /* Texto muted (slate-500) */
+
+    --border: 215 20% 82%; /* Bordes sutiles (slate-300) */
+    --input: 215 20% 82%;
+    --ring: 32 95% 44%; /* Ring color = primary (oro) */
+
+    --radius: 0.5rem; /* Border radius por defecto (8px) */
+  }
+
+  .dark {
+    /* Dark Mode - Colores litúrgicos adaptados */
+    --background: 224 71% 4%; /* Casi negro con tinte azul */
+    --foreground: 213 31% 91%; /* Texto claro */
+
+    --card: 224 71% 6%;
+    --card-foreground: 213 31% 91%;
+
+    --popover: 224 71% 6%;
+    --popover-foreground: 213 31% 91%;
+
+    --primary: 32 95% 50%; /* Oro más brillante en dark */
+    --primary-foreground: 0 0% 0%;
+
+    --secondary: 258 90% 70%; /* Púrpura más claro */
+    --secondary-foreground: 0 0% 0%;
+
+    --accent: 217 91% 65%;
+    --accent-foreground: 0 0% 0%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 213 31% 91%;
+
+    --muted: 223 47% 11%;
+    --muted-foreground: 215 16% 65%;
+
+    --border: 216 34% 17%;
+    --input: 216 34% 17%;
+    --ring: 32 95% 50%;
   }
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
-}
 
 @layer utilities {
   .text-balance {

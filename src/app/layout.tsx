@@ -1,9 +1,19 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, Lora } from 'next/font/google'
 import './globals.css'
 import NavBar from '@/components/NavBar'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+})
+
+const lora = Lora({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-lora',
+})
 
 export const metadata: Metadata = {
   title: 'FidesDigital',
@@ -24,8 +34,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="es" suppressHydrationWarning>
-      <body className={inter.className} suppressHydrationWarning>
+    <html lang="es" className={`${inter.variable} ${lora.variable}`} suppressHydrationWarning>
+      <body className="bg-slate-50 text-slate-800 antialiased" suppressHydrationWarning>
         <NavBar />
         {children}
       </body>
