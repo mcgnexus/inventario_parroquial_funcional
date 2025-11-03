@@ -314,15 +314,14 @@ export default async function CatalogoPage({
                       containerClassName="w-full h-full"
                       fallbackText="Sin imagen"
                     />
-                    <Link
+                    <a
                       href={`/catalogo/${it.id}${queryString}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="absolute top-2 right-2 bg-background/95 border rounded-md p-2 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={(e) => e.stopPropagation()}
                     >
                       <ExternalLink className="h-4 w-4" />
-                    </Link>
+                    </a>
                   </div>
                   <CardHeader>
                     <CardTitle className="text-base line-clamp-2">
