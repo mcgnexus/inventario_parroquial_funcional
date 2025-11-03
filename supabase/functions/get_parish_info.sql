@@ -6,9 +6,7 @@ RETURNS TABLE (
   id UUID,
   name TEXT,
   location TEXT,
-  diocese TEXT,
-  municipality TEXT,
-  province TEXT
+  diocese TEXT
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -20,9 +18,7 @@ BEGIN
     p.id,
     p.name,
     p.location,
-    p.diocese,
-    p.municipality,
-    p.province
+    p.diocese
   FROM public.parishes p
   WHERE p.id = parish_uuid
   LIMIT 1;
