@@ -194,13 +194,15 @@ export async function subirImagen(
 }
 
 /**
- * Genera el código de 3 letras para una parroquia a partir de su nombre.
- * Toma las 3 primeras letras de las palabras significativas del nombre.
- * Ejemplo: "Santa María la Mayor" -> "SMM"
+ * Genera el código de 3 letras para una parroquia a partir de su nombre y localidad.
+ * Formato: XXX (2 primeras letras del nombre + primera letra de la localidad)
+ * Ejemplo: "Santa María la Mayor", "Huéscar" -> "STH"
+ * Ejemplo: "San Pedro", "Alcalá" -> "SPA"
  * @param parishName - El nombre de la parroquia.
+ * @param location - La localidad de la parroquia (opcional).
  * @returns El código de 3 letras en mayúsculas.
  */
-export function generarCodigoParroquia(parishName: string): string {
+export function generarCodigoParroquia(parishName: string, location?: string): string {
   // Palabras que se deben ignorar (artículos, preposiciones, conectores)
   const stopWords = ['de', 'la', 'el', 'los', 'las', 'y', 'en', 'del', 'al', 'a']
 
@@ -217,51 +219,76 @@ export function generarCodigoParroquia(parishName: string): string {
   const palabrasSignificativas = palabras
     .filter(word => !stopWords.includes(normalize(word)))
 
-  // Tomar las primeras letras de las palabras significativas
-  let codigo = palabrasSignificativas
-    .map(word => word.charAt(0).toUpperCase())
-    .join('')
-
-  // Si no hay suficientes palabras significativas, tomar las primeras letras de todas las palabras
-  if (codigo.length < 3) {
-    codigo = palabras
-      .map(word => word.charAt(0).toUpperCase())
-      .join('')
+  // Si solo hay una palabra significativa, tomar las 2 primeras letras
+  // Si hay más de una, tomar la primera letra de las dos primeras palabras
+  let codigoParroquia = ''
+  if (palabrasSignificativas.length === 1) {
+    // Tomar las 2 primeras letras de la única palabra
+    codigoParroquia = palabrasSignificativas[0].substring(0, 2).toUpperCase()
+  } else if (palabrasSignificativas.length >= 2) {
+    // Tomar primera letra de las dos primeras palabras
+    codigoParroquia = (palabrasSignificativas[0].charAt(0) + palabrasSignificativas[1].charAt(0)).toUpperCase()
+  } else {
+    // Fallback: usar las primeras dos letras del nombre completo
+    codigoParroquia = parishName.substring(0, 2).toUpperCase()
   }
 
-  // Asegurar exactamente 3 letras
-  return codigo.substring(0, 3).padEnd(3, 'X')
+  // Asegurar que tengamos 2 letras
+  codigoParroquia = codigoParroquia.padEnd(2, 'X')
+
+  // Obtener la letra de la localidad
+  let letraLocalidad = 'X'
+  if (location && location.trim().length > 0) {
+    // Si la localidad tiene varias palabras (nombre compuesto), tomar la primera letra de la primera palabra
+    const primeraLetra = location.trim().charAt(0).toUpperCase()
+    letraLocalidad = primeraLetra
+  }
+
+  // Combinar: 2 letras del nombre + 1 letra de la localidad
+  return codigoParroquia + letraLocalidad
 }
 
 /**
- * Genera el código de 3 letras para un tipo de objeto.
- * Ejemplo: "Orfebrería" -> "ORF"
- * @param tipoObjeto - El tipo de objeto.
+ * Genera el código de 3 letras para una categoría.
+ * Ejemplo: "pintura" -> "PIN", "escultura" -> "ESC"
+ * @param categoria - La categoría del objeto.
  * @returns El código de 3 letras en mayúsculas.
  */
-export function generarCodigoObjeto(tipoObjeto: string): string {
+export function generarCodigoCategoria(categoria: string): string {
   // Normalizar y quitar tildes
   const normalize = (str: string) =>
     str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()
 
-  const normalizado = normalize(tipoObjeto)
+  const normalizado = normalize(categoria)
 
-  // Mapeo de tipos comunes a códigos específicos
-  const mapeoTipos: Record<string, string> = {
-    'ORFEBRERIA': 'ORF',
+  // Mapeo de categorías a códigos específicos (basado en el enum CategoriaObjetoEnum)
+  const mapeoCategorias: Record<string, string> = {
     'PINTURA': 'PIN',
     'ESCULTURA': 'ESC',
+    'ORFEBRERIA': 'ORF',
+    'TEXTIL': 'TEX',
+    'DOCUMENTO': 'DOC',
+    'LIBRO': 'LIB',
+    'MOBILIARIO': 'MOB',
+    'INSTRUMENTO_MUSICAL': 'INS',
+    'INSTRUMENTOMUSICAL': 'INS',
+    'RETABLO': 'RET',
+    'IMAGINERIA': 'IMA',
+    'VITRAL': 'VIT',
+    'CERAMICA': 'CER',
+    'METALURGIA': 'MET',
+    'OTRO': 'OTR',
+    'OTROS': 'OTR',
+    // Variantes adicionales
     'TALLA': 'TAL',
     'ORNAMENTOS': 'ORN',
     'TELAS': 'TEL',
-    'MOBILIARIO': 'MOB',
     'DOCUMENTOS': 'DOC',
-    'OTROS': 'OTR'
   }
 
   // Si existe mapeo, usarlo
-  if (mapeoTipos[normalizado]) {
-    return mapeoTipos[normalizado]
+  if (mapeoCategorias[normalizado]) {
+    return mapeoCategorias[normalizado]
   }
 
   // Si no, tomar las 3 primeras letras
@@ -270,22 +297,22 @@ export function generarCodigoObjeto(tipoObjeto: string): string {
 
 /**
  * Genera un número de inventario único para una parroquia.
- * Formato: XXX-YYYY-OOO-NNNN
+ * Formato: XXX-YYYY-ZZZ-NNNN
  * Donde:
- * - XXX: Código de 3 letras de la parroquia (primeras letras de palabras significativas)
- * - YYYY: Año de catalogación
- * - OOO: Código de 3 letras del tipo de objeto
- * - NNNN: Número secuencial único para cada parroquia (4 dígitos)
+ * - XXX: Código de 3 letras de la parroquia (2 letras del nombre + 1 letra de la localidad)
+ * - YYYY: Año de confección de la ficha
+ * - ZZZ: Código de 3 letras de la categoría del objeto
+ * - NNNN: Número secuencial único para cada parroquia (4 dígitos, comenzando desde 0001)
  *
  * @param parishId - El UUID de la parroquia.
- * @param tipoObjeto - El tipo de objeto (e.g., 'orfebrería').
+ * @param categoria - La categoría del objeto (e.g., 'pintura', 'escultura').
  * @returns El número de inventario generado o null si hay un error.
  */
 export async function generarNumeroInventario(
   parishId: string,
-  tipoObjeto: string
+  categoria: string
 ): Promise<string | null> {
-  console.log('🔢 generarNumeroInventario llamado con:', { parishId, tipoObjeto })
+  console.log('🔢 generarNumeroInventario llamado con:', { parishId, categoria })
 
   if (!supabase) {
     console.error('❌ Supabase no está configurado')
@@ -293,37 +320,57 @@ export async function generarNumeroInventario(
   }
 
   try {
-    // 1. Obtener el nombre de la parroquia para el código XXX
-    console.log('📍 Obteniendo nombre de parroquia...')
-    const parishName = await obtenerParroquiaNombre(parishId)
-    if (!parishName) {
-      console.error(`❌ No se encontró el nombre para la parroquia con ID: ${parishId}`)
+    // 1. Obtener el nombre y localidad de la parroquia para el código XXX
+    console.log('�� Obteniendo nombre y localidad de parroquia...')
+    const { data, error } = await supabase
+      .from('parishes')
+      .select('name, location')
+      .eq('id', parishId)
+      .limit(1)
+
+    if (error) {
+      console.error('❌ Error al obtener parroquia:', error)
       return null
     }
-    console.log('✅ Nombre de parroquia:', parishName)
 
-    const parishCode = generarCodigoParroquia(parishName)
+    if (!data || data.length === 0) {
+      console.error(`❌ No se encontró la parroquia con ID: ${parishId}`)
+      return null
+    }
+
+    const parish = data[0] as { name?: string; location?: string }
+    const parishName = parish.name
+    const location = parish.location
+
+    if (!parishName) {
+      console.error(`❌ La parroquia con ID ${parishId} no tiene nombre`)
+      return null
+    }
+
+    console.log('✅ Parroquia encontrada:', parishName, location ? `(${location})` : '')
+
+    const parishCode = generarCodigoParroquia(parishName, location)
     console.log('✅ Código de parroquia:', parishCode)
 
     // 2. Obtener el año actual (YYYY)
     const year = new Date().getFullYear()
     console.log('📅 Año:', year)
 
-    // 3. Obtener el código del tipo de objeto (OOO)
-    const objectCode = generarCodigoObjeto(tipoObjeto)
-    console.log('🎨 Código de objeto:', objectCode)
+    // 3. Obtener el código de la categoría (ZZZ)
+    const categoryCode = generarCodigoCategoria(categoria)
+    console.log('🎨 Código de categoría:', categoryCode)
 
     // 4. Obtener el número secuencial para esa parroquia (NNNN)
     // Cuenta todos los items de esta parroquia para generar el siguiente número
     console.log('🔍 Contando items en la parroquia...')
-    const { count, error } = await supabase
+    const { count, error: countError } = await supabase
       .from('items')
       .select('*', { count: 'exact', head: true })
       .eq('parish_id', parishId)
 
-    if (error) {
-      console.error('❌ Error al contar items:', error)
-      throw error
+    if (countError) {
+      console.error('❌ Error al contar items:', countError)
+      throw countError
     }
 
     console.log('📊 Items encontrados:', count)
@@ -331,7 +378,7 @@ export async function generarNumeroInventario(
     const sequentialNumber = String(nextNumber).padStart(4, '0')
     console.log('🔢 Número secuencial:', sequentialNumber)
 
-    const numeroFinal = `${parishCode}-${year}-${objectCode}-${sequentialNumber}`
+    const numeroFinal = `${parishCode}-${year}-${categoryCode}-${sequentialNumber}`
     console.log('✅ Número de inventario generado:', numeroFinal)
     return numeroFinal
   } catch (e: unknown) {
@@ -364,11 +411,11 @@ export async function guardarCatalogacion(
       return { error: 'No se puede aprobar sin fotografía adjunta.' }
     }
 
-    // Generar número de inventario si no existe y tenemos parish_id
+    // Generar número de inventario si no existe y tenemos parish_id y categoría
     let inventoryNumber = catalogo.inventory_number
-    if (!inventoryNumber && catalogo.parish_id) {
+    if (!inventoryNumber && catalogo.parish_id && catalogo.categoria) {
       // generarNumeroInventario devuelve string | null; normalizamos null a undefined
-      inventoryNumber = (await generarNumeroInventario(catalogo.parish_id, catalogo.tipo_objeto)) ?? undefined
+      inventoryNumber = (await generarNumeroInventario(catalogo.parish_id, catalogo.categoria)) ?? undefined
     }
 
     const jsonRespuesta = {

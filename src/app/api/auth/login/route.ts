@@ -11,9 +11,15 @@ export async function POST(request: NextRequest) {
     console.log('[API Login] Iniciando login...')
 
     if (!supabaseUrl || !supabaseAnonKey) {
-      console.error('[API Login] Variables de entorno faltantes')
+      const missing: string[] = []
+      if (!supabaseUrl) missing.push('NEXT_PUBLIC_SUPABASE_URL')
+      if (!supabaseAnonKey) missing.push('NEXT_PUBLIC_SUPABASE_ANON_KEY')
+
+      console.error('[API Login] Variables de entorno faltantes:', missing.join(', '))
       return NextResponse.json(
-        createErrorResponse('Configuración de Supabase incompleta'),
+        createErrorResponse(
+          `Configuración de Supabase incompleta: faltan ${missing.join(', ')}`
+        ),
         { status: 500 }
       )
     }

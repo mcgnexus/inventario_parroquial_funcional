@@ -172,16 +172,16 @@ export default function InventoryForm({
     console.log('🔍 InventoryForm - Verificando generación de número:', {
       estaEditando,
       parish_id: datos.parish_id,
-      tipo_objeto: datos.tipo_objeto,
+      categoria: datos.categoria,
       inventory_number: datos.inventory_number
     })
 
-    // Solo generar si estamos editando y tenemos parroquia y tipo de objeto
-    if (estaEditando && datos.parish_id && datos.tipo_objeto) {
+    // Solo generar si estamos editando y tenemos parroquia y categoría
+    if (estaEditando && datos.parish_id && datos.categoria) {
       // Solo generar si no hay número de inventario o está vacío
       if (!datos.inventory_number || datos.inventory_number.trim() === '') {
         console.log('✅ Generando número de inventario...')
-        generarNumeroInventario(datos.parish_id, datos.tipo_objeto)
+        generarNumeroInventario(datos.parish_id, datos.categoria)
           .then(numeroGenerado => {
             if (numeroGenerado) {
               console.log('✅ Número generado:', numeroGenerado)
@@ -200,10 +200,10 @@ export default function InventoryForm({
       console.log('⚠️ Faltan datos para generar número:', {
         estaEditando,
         tiene_parish: !!datos.parish_id,
-        tiene_tipo: !!datos.tipo_objeto
+        tiene_categoria: !!datos.categoria
       })
     }
-  }, [estaEditando, datos.parish_id, datos.tipo_objeto, datos.inventory_number, onActualizarCampo])
+  }, [estaEditando, datos.parish_id, datos.categoria, datos.inventory_number, onActualizarCampo])
 
   const toggleSeccion = (seccion: keyof typeof seccionVisible) => {
     setSeccionVisible((prev) => ({
