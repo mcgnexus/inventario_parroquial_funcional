@@ -2,9 +2,13 @@
 import { useEffect, useState, Suspense } from 'react'
 import { getCurrentUser, signOut, onAuthStateChange, signUpWithProfile, getSupabaseBrowser } from '@/lib/auth'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, LogIn, UserPlus, LogOut, User } from 'lucide-react'
 import type { PostgrestError } from '@supabase/supabase-js'
 import type { AuthResponse } from '@supabase/supabase-js'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 
 type ParishOption = { id: string; name: string }
 export default function AuthPage() {
@@ -249,64 +253,91 @@ function AuthPageContent() {
 
   return (
     <div className="max-w-md mx-auto px-6 py-10">
-      <h1 className="text-2xl font-bold text-slate-800 mb-6">Autenticación</h1>
+      <div className="mb-8 text-center">
+        <h1 className="text-3xl font-bold text-foreground mb-2">Autenticación</h1>
+        <p className="text-sm text-muted-foreground">Accede al sistema de inventario parroquial</p>
+      </div>
 
       {reason === 'login-required' && (
-        <div className="mb-4 px-3 py-2 bg-yellow-50 text-yellow-800 border border-yellow-200 rounded">
-          Se requiere iniciar sesión para subir imágenes desde el chat.
-        </div>
+        <Card className="mb-6 border-amber-200 bg-amber-50/50">
+          <CardContent className="pt-4">
+            <p className="text-sm text-amber-800">
+              Se requiere iniciar sesión para subir imágenes desde el chat.
+            </p>
+          </CardContent>
+        </Card>
       )}
 
-      <div className="mb-4 flex gap-2">
-        <button
+      <div className="mb-6 flex gap-2">
+        <Button
+          variant={mode === 'login' ? 'default' : 'outline'}
           onClick={() => setMode('login')}
-          className={`px-3 py-1.5 rounded text-sm border ${mode === 'login' ? 'bg-amber-600 text-white border-amber-600' : 'bg-white text-slate-700 border-slate-300'}`}
-        >Iniciar sesión</button>
-        <button
+          className="flex-1"
+        >
+          <LogIn className="mr-2 h-4 w-4" />
+          Iniciar sesión
+        </Button>
+        <Button
+          variant={mode === 'register' ? 'default' : 'outline'}
           onClick={() => setMode('register')}
-          className={`px-3 py-1.5 rounded text-sm border ${mode === 'register' ? 'bg-amber-600 text-white border-amber-600' : 'bg-white text-slate-700 border-slate-300'}`}
-        >Registrarse</button>
+          className="flex-1"
+        >
+          <UserPlus className="mr-2 h-4 w-4" />
+          Registrarse
+        </Button>
       </div>
 
       {mode === 'login' ? (
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
-          <div className="mb-4">
-            <label className="block text-xs font-semibold text-slate-600 mb-1">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full text-sm border border-slate-300 rounded px-3 py-1.5"
-              placeholder="usuario@parroquia.org"
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-xs font-semibold text-slate-600 mb-1">Contraseña</label>
-            <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full text-sm border border-slate-300 rounded px-3 py-1.5 pr-10"
-                placeholder="••••••••"
+        <Card>
+          <CardHeader>
+            <CardTitle>Iniciar sesión</CardTitle>
+            <CardDescription>Ingresa tus credenciales para acceder</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="usuario@parroquia.org"
+                autoComplete="email"
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(v => !v)}
-                aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
             </div>
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Contraseña</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="pr-10"
+                  autoComplete="current-password"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowPassword(v => !v)}
+                  aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                </Button>
+              </div>
+            </div>
 
-          {error && (
-            <div className="mb-4 text-sm text-red-600">{error}</div>
-          )}
-
-          <div className="flex gap-2">
-            <button
+            {error && (
+              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive border border-destructive/20">
+                {error}
+              </div>
+            )}
+          </CardContent>
+          <CardFooter className="flex flex-wrap gap-2">
+            <Button
               type="button"
               onClick={() => {
                 console.log('[Auth] Botón clickeado - Email:', email.trim(), 'Password:', password ? 'presente' : 'vacío');
@@ -319,164 +350,202 @@ function AuthPageContent() {
                 handleSignIn();
               }}
               disabled={loading}
-              className="px-3 py-1.5 bg-amber-600 text-white rounded text-sm hover:bg-amber-700 disabled:bg-slate-300"
-              aria-busy={loading}
+              className="flex-1"
             >
-              Iniciar sesión
-            </button>
-            <button
+              <LogIn className="mr-2 h-4 w-4" />
+              {loading ? 'Iniciando...' : 'Iniciar sesión'}
+            </Button>
+            <Button
               type="button"
+              variant="secondary"
               onClick={handleSignOut}
               disabled={loading || !userId}
-              className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded text-sm hover:bg-slate-200 disabled:bg-slate-300"
             >
+              <LogOut className="mr-2 h-4 w-4" />
               Cerrar sesión
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={() => console.log('[Auth] Botón de prueba clickeado')}
-              className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded text-sm hover:bg-blue-200"
             >
               Test
-            </button>
-          </div>
-        </div>
+            </Button>
+          </CardFooter>
+        </Card>
       ) : (
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
-          <div className="mb-4">
-            <label className="block text-xs font-semibold text-slate-600 mb-1">Nombre completo</label>
-            <input
-              type="text"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              className="w-full text-sm border border-slate-300 rounded px-3 py-1.5"
-              placeholder="Nombre y apellidos"
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-xs font-semibold text-slate-600 mb-1">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full text-sm border border-slate-300 rounded px-3 py-1.5"
-              placeholder="usuario@parroquia.org"
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-xs font-semibold text-slate-600 mb-1">Contraseña</label>
-            <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full text-sm border border-slate-300 rounded px-3 py-1.5 pr-10"
-                placeholder="••••••••"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(v => !v)}
-                aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-          </div>
-          <div className="mb-4">
-            <label className="block text-xs font-semibold text-slate-600 mb-1">Confirmar contraseña</label>
-            <div className="relative">
-              <input
-                type={showConfirmPassword ? 'text' : 'password'}
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full text-sm border border-slate-300 rounded px-3 py-1.5 pr-10"
-                placeholder="••••••••"
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(v => !v)}
-                aria-label={showConfirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
-              >
-                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-          </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">Parroquia (ID o nombre)</label>
-            <div className="relative">
-              <input
+        <Card>
+          <CardHeader>
+            <CardTitle>Crear cuenta</CardTitle>
+            <CardDescription>Completa el formulario para registrarte</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="fullName">Nombre completo</Label>
+              <Input
+                id="fullName"
                 type="text"
-                value={parishId}
-                onChange={(e) => setParishId(e.target.value)}
-                className="w-full text-sm border border-slate-300 rounded px-3 py-1.5"
-                placeholder="Escribe para buscar por nombre (opcional)"
-                onFocus={() => parishOptions.length && setParishOpen(true)}
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Nombre y apellidos"
+                autoComplete="name"
               />
-              {parishOpen && (
-                <div className="absolute z-10 mt-1 w-full bg-white border border-slate-200 rounded shadow-sm">
-                  {parishLoading ? (
-                    <div className="px-3 py-2 text-xs text-slate-500">Buscando...</div>
-                  ) : parishOptions.length ? (
-                    parishOptions.map((opt) => (
-                      <button
-                        key={opt.id}
-                        type="button"
-                        onClick={() => handleSelectParish(opt)}
-                        className="block w-full text-left px-3 py-2 text-sm hover:bg-slate-100"
-                      >
-                        {opt.name}
-                      </button>
-                    ))
-                  ) : (
-                    <div className="px-3 py-2 text-xs text-slate-500">Sin resultados</div>
-                  )}
-                </div>
-              )}
             </div>
-          </div>
-          <div className="mb-4">
-            <label className="block text-xs font-semibold text-slate-600 mb-1">Rol</label>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="text-sm border border-slate-300 rounded px-2 py-1 bg-white"
-            >
-              <option value="user">Usuario</option>
-              <option value="admin">Administrador</option>
-            </select>
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="register-email">Email</Label>
+              <Input
+                id="register-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="usuario@parroquia.org"
+                autoComplete="email"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="register-password">Contraseña</Label>
+              <div className="relative">
+                <Input
+                  id="register-password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="pr-10"
+                  autoComplete="new-password"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowPassword(v => !v)}
+                  aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="pr-10"
+                  autoComplete="new-password"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowConfirmPassword(v => !v)}
+                  aria-label={showConfirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                >
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="parish">Parroquia (opcional)</Label>
+              <div className="relative">
+                <Input
+                  id="parish"
+                  type="text"
+                  value={parishId}
+                  onChange={(e) => setParishId(e.target.value)}
+                  placeholder="Escribe para buscar por nombre"
+                  onFocus={() => parishOptions.length && setParishOpen(true)}
+                />
+                {parishOpen && (
+                  <div className="absolute z-10 mt-1 w-full bg-card border border-border rounded-md shadow-lg">
+                    {parishLoading ? (
+                      <div className="px-3 py-2 text-sm text-muted-foreground">Buscando...</div>
+                    ) : parishOptions.length ? (
+                      parishOptions.map((opt) => (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => handleSelectParish(opt)}
+                          className="block w-full text-left px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+                        >
+                          {opt.name}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-3 py-2 text-sm text-muted-foreground">Sin resultados</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="role">Rol</Label>
+              <select
+                id="role"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <option value="user">Usuario</option>
+                <option value="admin">Administrador</option>
+              </select>
+            </div>
 
-          {error && (
-            <div className="mb-4 text-sm text-red-600">{error}</div>
-          )}
-
-          <div className="flex gap-2">
-            <button
+            {error && (
+              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive border border-destructive/20">
+                {error}
+              </div>
+            )}
+          </CardContent>
+          <CardFooter className="flex gap-2">
+            <Button
               onClick={handleSignUp}
               disabled={loading}
-              className="px-3 py-1.5 bg-amber-600 text-white rounded text-sm hover:bg-amber-700 disabled:bg-slate-300"
+              className="flex-1"
             >
-              Registrarse
-            </button>
-            <button
+              <UserPlus className="mr-2 h-4 w-4" />
+              {loading ? 'Registrando...' : 'Registrarse'}
+            </Button>
+            <Button
+              variant="outline"
               onClick={() => setMode('login')}
-              className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded text-sm hover:bg-slate-200"
             >
               Ya tengo cuenta
-            </button>
-          </div>
-        </div>
+            </Button>
+          </CardFooter>
+        </Card>
       )}
 
-      <div className="mt-6 bg-white rounded-lg shadow-sm border border-slate-200 p-4">
-        <div className="text-xs font-semibold text-slate-600">Usuario actual</div>
-        <div className="text-sm text-slate-800">{userId ? userId : 'No autenticado'}</div>
-        <div className="mt-2 text-xs text-slate-600">Tras iniciar sesión, prueba a subir una imagen en el chat para verificar que `/api/upload` deriva tu usuario desde cookies.</div>
-      </div>
-      <footer className="text-center mt-10 text-sm text-gray-500">
-        <p>💡Creado por: Manuel Carrasco García</p>
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="text-sm flex items-center gap-2">
+            <User className="h-4 w-4" />
+            Estado de sesión
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Usuario:</span>
+              <span className="text-sm font-mono">
+                {userId ? userId.substring(0, 8) + '...' : 'No autenticado'}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Tras iniciar sesión, prueba a subir una imagen en el chat para verificar que `/api/upload` deriva tu usuario desde cookies.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <footer className="text-center mt-10 text-sm text-muted-foreground">
+        <p>Creado por: Manuel Carrasco García</p>
       </footer>
     </div>
   )
