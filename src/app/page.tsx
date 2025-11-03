@@ -3,7 +3,10 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { getCurrentUser, onAuthStateChange, signOut } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
-import { LogIn, UserPlus, FileText, PlusCircle, LogOut } from 'lucide-react'
+import { LogIn, UserPlus, FileText, PlusCircle, LogOut, Church } from 'lucide-react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 
 export default function Home() {
   const [userEmail, setUserEmail] = useState<string | null>(null)
@@ -30,85 +33,170 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 py-8 sm:py-10 px-3 sm:px-4">
-      <div className="container mx-auto max-w-5xl">
-        <header className="text-center mb-10">
-          <h1 className="text-3xl sm:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2 sm:mb-3">FidesDigital</h1>
-          <p className="text-slate-600">Inventario patrimonial asistido por IA</p>
+    <main className="min-h-screen bg-background py-8 sm:py-12 px-3 sm:px-4">
+      <div className="container mx-auto max-w-6xl">
+        {/* Header con tema litúrgico */}
+        <header className="text-center mb-12">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <Church className="h-10 w-10 sm:h-12 sm:w-12 text-primary" />
+            <h1 className="text-4xl sm:text-6xl font-bold text-primary">
+              FidesDigital
+            </h1>
+          </div>
+          <p className="text-lg text-muted-foreground mb-2">
+            Inventario Patrimonial Eclesiástico
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Catalogación asistida por IA para el patrimonio de la Diócesis
+          </p>
           {userEmail && (
-            <p className="mt-2 text-sm text-slate-500">Sesión: {userEmail}</p>
+            <div className="mt-4">
+              <Badge variant="secondary" className="text-sm">
+                Sesión activa: {userEmail}
+              </Badge>
+            </div>
           )}
         </header>
 
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* Catálogo: Público */}
-          <Link href="/catalogo" className="group block rounded-xl border border-slate-200 bg-white p-5 shadow-sm hover:shadow-md transition">
-            <div className="flex items-center gap-3">
-              <FileText className="h-6 w-6 text-amber-600 group-hover:text-amber-700" />
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-slate-800">Catálogo</h3>
-                  <span className="rounded-full bg-slate-100 text-slate-600 text-xs px-2 py-0.5">Público</span>
+        {/* Grid de acciones principales */}
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          {/* Catálogo Público */}
+          <Link href="/catalogo" className="group">
+            <Card className="h-full transition-all hover:shadow-lg hover:border-primary/50">
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <FileText className="h-8 w-8 text-primary group-hover:scale-110 transition-transform" />
+                  <Badge variant="outline">Público</Badge>
                 </div>
-                <p className="text-sm text-slate-500">Explora y filtra los bienes inventariados</p>
-              </div>
-            </div>
+                <CardTitle className="group-hover:text-primary transition-colors">
+                  Catálogo Diocesano
+                </CardTitle>
+                <CardDescription>
+                  Explora el patrimonio artístico y litúrgico inventariado de la Diócesis de Guadix
+                </CardDescription>
+              </CardHeader>
+            </Card>
           </Link>
 
-          {/* Inserción: requiere login si no hay sesión */}
-          <Link href={userEmail ? '/inventario' : '/auth?mode=login&reason=login-required'} className="group block rounded-xl border border-slate-200 bg-white p-5 shadow-sm hover:shadow-md transition">
-            <div className="flex items-center gap-3">
-              <PlusCircle className="h-6 w-6 text-amber-600 group-hover:text-amber-700" />
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-slate-800">Inserción de inventario</h3>
+          {/* Inserción de inventario */}
+          <Link
+            href={userEmail ? '/inventario' : '/auth?mode=login&reason=login-required'}
+            className="group"
+          >
+            <Card className="h-full transition-all hover:shadow-lg hover:border-primary/50">
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <PlusCircle className="h-8 w-8 text-primary group-hover:scale-110 transition-transform" />
                   {!userEmail && (
-                    <span className="rounded-full bg-yellow-50 text-amber-700 border border-amber-200 text-xs px-2 py-0.5">Requiere login</span>
+                    <Badge variant="secondary" className="bg-amber-100 text-amber-700 border-amber-200">
+                      Requiere login
+                    </Badge>
                   )}
                 </div>
-                <p className="text-sm text-slate-500">Analiza una imagen y registra el objeto</p>
-              </div>
-            </div>
+                <CardTitle className="group-hover:text-primary transition-colors">
+                  Nueva Catalogación
+                </CardTitle>
+                <CardDescription>
+                  Analiza una fotografía con IA y registra un objeto del patrimonio parroquial
+                </CardDescription>
+              </CardHeader>
+            </Card>
           </Link>
 
-          {/* Login y registro con modo explícito */}
-          <Link href="/auth?mode=login" className="group block rounded-xl border border-slate-200 bg-white p-5 shadow-sm hover:shadow-md transition">
-            <div className="flex items-center gap-3">
-              <LogIn className="h-6 w-6 text-amber-600 group-hover:text-amber-700" />
-              <div>
-                <h3 className="font-semibold text-slate-800">Iniciar sesión</h3>
-                <p className="text-sm text-slate-500">Accede para guardar y gestionar inventario</p>
-              </div>
-            </div>
-          </Link>
+          {/* Iniciar sesión */}
+          {!userEmail && (
+            <Link href="/auth?mode=login" className="group">
+              <Card className="h-full transition-all hover:shadow-lg hover:border-primary/50">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <LogIn className="h-8 w-8 text-primary group-hover:scale-110 transition-transform" />
+                  </div>
+                  <CardTitle className="group-hover:text-primary transition-colors">
+                    Iniciar Sesión
+                  </CardTitle>
+                  <CardDescription>
+                    Accede para gestionar el inventario de tu parroquia
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            </Link>
+          )}
 
-          <Link href="/auth?mode=register" className="group block rounded-xl border border-slate-200 bg-white p-5 shadow-sm hover:shadow-md transition">
-            <div className="flex items-center gap-3">
-              <UserPlus className="h-6 w-6 text-amber-600 group-hover:text-amber-700" />
-              <div>
-                <h3 className="font-semibold text-slate-800">Registrarse</h3>
-                <p className="text-sm text-slate-500">Crea una cuenta vinculada a tu parroquia</p>
-              </div>
-            </div>
-          </Link>
+          {/* Registrarse */}
+          {!userEmail && (
+            <Link href="/auth?mode=register" className="group">
+              <Card className="h-full transition-all hover:shadow-lg hover:border-primary/50">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <UserPlus className="h-8 w-8 text-primary group-hover:scale-110 transition-transform" />
+                  </div>
+                  <CardTitle className="group-hover:text-primary transition-colors">
+                    Registrarse
+                  </CardTitle>
+                  <CardDescription>
+                    Crea una cuenta vinculada a tu parroquia para colaborar en el inventario
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            </Link>
+          )}
 
-          <button
-            onClick={handleSignOut}
-            disabled={!userEmail}
-            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm hover:shadow-md transition text-left disabled:opacity-50"
-          >
-            <div className="flex items-center gap-3">
-              <LogOut className="h-6 w-6 text-amber-600" />
-              <div>
-                <h3 className="font-semibold text-slate-800">Salir</h3>
-                <p className="text-sm text-slate-500">Cierra la sesión actual</p>
-              </div>
-            </div>
-          </button>
+          {/* Salir - solo visible si hay sesión */}
+          {userEmail && (
+            <Card className="h-full">
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <LogOut className="h-8 w-8 text-destructive" />
+                </div>
+                <CardTitle>Cerrar Sesión</CardTitle>
+                <CardDescription className="mb-4">
+                  Finaliza tu sesión actual de forma segura
+                </CardDescription>
+                <Button
+                  variant="destructive"
+                  onClick={handleSignOut}
+                  className="w-full"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Salir
+                </Button>
+              </CardHeader>
+            </Card>
+          )}
         </section>
 
-        <footer className="text-center mt-10 text-sm text-gray-500">
-          <p>💡Creado por: Manuel Carrasco García</p>
+        {/* Información adicional */}
+        <Card className="bg-muted/50 border-primary/20">
+          <CardContent className="pt-6">
+            <div className="grid md:grid-cols-3 gap-6 text-center">
+              <div>
+                <div className="text-3xl font-bold text-primary mb-1">IA</div>
+                <p className="text-sm text-muted-foreground">
+                  Análisis automático con inteligencia artificial
+                </p>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-primary mb-1">Cloud</div>
+                <p className="text-sm text-muted-foreground">
+                  Almacenamiento seguro en la nube de Supabase
+                </p>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-primary mb-1">Colaborativo</div>
+                <p className="text-sm text-muted-foreground">
+                  Múltiples parroquias trabajando juntas
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Footer */}
+        <footer className="text-center mt-12 text-sm text-muted-foreground">
+          <p className="flex items-center justify-center gap-2">
+            <Church className="h-4 w-4" />
+            Diócesis de Guadix • Desarrollado por Manuel Carrasco García
+          </p>
         </footer>
       </div>
     </main>
