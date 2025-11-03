@@ -359,11 +359,10 @@ export async function generarNumeroInventario(
 
     // 4. Obtener el número secuencial para esa parroquia (NNNN)
     // Cuenta todos los items de esta parroquia para generar el siguiente número
+    // Usar función RPC para evitar problemas de recursión infinita en RLS
     console.log('🔍 Contando items en la parroquia...')
-    const { count, error: countError } = await supabase
-      .from('items')
-      .select('*', { count: 'exact', head: true })
-      .eq('parish_id', parishId)
+    const { data: count, error: countError } = await supabase
+      .rpc('count_parish_items', { parish_uuid: parishId })
 
     if (countError) {
       console.error('❌ Error al contar items:', countError)
