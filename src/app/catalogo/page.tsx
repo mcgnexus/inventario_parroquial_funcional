@@ -5,6 +5,12 @@ import { obtenerCatalogoPaginado, type FiltrosCatalogo } from '@/lib/supabase'
 import CatalogoUserFilter from '@/components/CatalogoUserFilter'
 import OptimizedImage from '@/components/OptimizedImage'
 import Pagination from '@/components/Pagination'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Search, Filter, Plus, ExternalLink, X } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -122,172 +128,181 @@ export default async function CatalogoPage({
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-10">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-4">
-        <Image
-          src="/guadix.svg"
-          alt="Diócesis de Guadix"
-          width={32}
-          height={32}
-          priority
-          className="logo-escudo"
-          style={{ height: '2rem', width: 'auto' }}
-        />
-        <div className="text-sm text-slate-600">Diócesis de Guadix — Catálogo</div>
+      <div className="flex items-center gap-3 mb-6">
+        <div className="relative h-8 w-8">
+          <Image
+            src="/guadix.svg"
+            alt="Diócesis de Guadix"
+            width={32}
+            height={32}
+            priority
+            className="object-contain"
+          />
+        </div>
+        <div className="text-sm text-muted-foreground">Diócesis de Guadix — Catálogo</div>
       </div>
 
       {/* Title */}
-      <div className="flex items-baseline justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800">Catálogo</h1>
-          {parishHeader && <p className="text-sm text-slate-600">Parroquia: {parishHeader}</p>}
-          {userParam && (
-            <p className="text-xs mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-              Filtrando: Mis piezas
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold text-foreground">Catálogo Diocesano</h1>
+          {parishHeader && (
+            <p className="text-sm text-muted-foreground">
+              Parroquia: <span className="font-medium text-foreground">{parishHeader}</span>
             </p>
           )}
-          <p className="text-xs text-slate-500 mt-1">
-            Mostrando {filtrados.length} de {total} resultados
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            {userParam && (
+              <Badge variant="secondary" className="gap-1">
+                <Filter className="h-3 w-3" />
+                Mis piezas
+              </Badge>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Mostrando {filtrados.length} de {total} resultados
+            </p>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <Suspense fallback={null}>
             <CatalogoUserFilter />
           </Suspense>
-          <Link
-            href="/inventario"
-            className="px-4 py-2 bg-amber-600 text-white text-sm font-medium rounded-md hover:bg-amber-700 transition-colors shadow-sm"
-          >
-            Añadir nueva pieza
-          </Link>
+          <Button asChild>
+            <Link href="/inventario">
+              <Plus className="mr-2 h-4 w-4" />
+              Añadir pieza
+            </Link>
+          </Button>
         </div>
       </div>
 
       {/* Filters */}
-      <form
-        method="GET"
-        className="mb-6 bg-white border border-slate-200 rounded-lg p-4 flex flex-wrap gap-4 items-end"
-      >
-        {userParam && <input type="hidden" name="user" value={userParam} />}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            Filtros de búsqueda
+          </CardTitle>
+          <CardDescription>Refina tu búsqueda usando los criterios disponibles</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form method="GET" className="flex flex-wrap gap-4 items-end">
+            {userParam && <input type="hidden" name="user" value={userParam} />}
 
-        <div>
-          <label htmlFor="tipo" className="block text-xs font-semibold text-slate-600 mb-1">
-            Tipo
-          </label>
-          <select
-            id="tipo"
-            name="tipo"
-            defaultValue={tipo}
-            className="text-sm border border-slate-300 rounded px-2 py-1 bg-white"
-          >
-            <option value="">Todos</option>
-            {tipos.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </div>
+            <div className="space-y-2">
+              <Label htmlFor="tipo">Tipo</Label>
+              <select
+                id="tipo"
+                name="tipo"
+                defaultValue={tipo}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <option value="">Todos</option>
+                {tipos.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-        <div>
-          <label htmlFor="categoria" className="block text-xs font-semibold text-slate-600 mb-1">
-            Categoría
-          </label>
-          <select
-            id="categoria"
-            name="categoria"
-            defaultValue={categoria}
-            className="text-sm border border-slate-300 rounded px-2 py-1 bg-white"
-          >
-            <option value="">Todas</option>
-            {CATEGORY_OPTIONS.map((label) => (
-              <option key={label.toLowerCase()} value={label.toLowerCase()}>
-                {label}
-              </option>
-            ))}
-            {categoriasExtra.map((c) => (
-              <option key={c} value={c}>
-                {c.charAt(0).toUpperCase() + c.slice(1)}
-              </option>
-            ))}
-          </select>
-        </div>
+            <div className="space-y-2">
+              <Label htmlFor="categoria">Categoría</Label>
+              <select
+                id="categoria"
+                name="categoria"
+                defaultValue={categoria}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <option value="">Todas</option>
+                {CATEGORY_OPTIONS.map((label) => (
+                  <option key={label.toLowerCase()} value={label.toLowerCase()}>
+                    {label}
+                  </option>
+                ))}
+                {categoriasExtra.map((c) => (
+                  <option key={c} value={c}>
+                    {c.charAt(0).toUpperCase() + c.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-        <div>
-          <label htmlFor="parroquia" className="block text-xs font-semibold text-slate-600 mb-1">
-            Parroquia
-          </label>
-          <select
-            id="parroquia"
-            name="parroquia"
-            defaultValue={parroquia}
-            className="text-sm border border-slate-300 rounded px-2 py-1 bg-white"
-          >
-            <option value="">Todas</option>
-            {parroquias.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
-            ))}
-          </select>
-        </div>
+            <div className="space-y-2">
+              <Label htmlFor="parroquia">Parroquia</Label>
+              <select
+                id="parroquia"
+                name="parroquia"
+                defaultValue={parroquia}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <option value="">Todas</option>
+                {parroquias.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-        <div className="flex-1 min-w-[200px]">
-          <label htmlFor="buscar" className="block text-xs font-semibold text-slate-600 mb-1">
-            Buscar
-          </label>
-          <input
-            type="text"
-            id="buscar"
-            name="q"
-            placeholder="Palabras clave (descripción, estilo, observaciones...)"
-            defaultValue={q}
-            className="w-full text-sm border border-slate-300 rounded px-3 py-1.5"
-          />
-        </div>
+            <div className="flex-1 min-w-[200px] space-y-2">
+              <Label htmlFor="buscar">Buscar</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  id="buscar"
+                  name="q"
+                  placeholder="Palabras clave..."
+                  defaultValue={q}
+                  className="pl-9"
+                />
+              </div>
+            </div>
 
-        <div className="flex gap-2">
-          <button
-            type="submit"
-            className="px-3 py-1.5 bg-amber-600 text-white rounded text-sm hover:bg-amber-700"
-          >
-            Filtrar
-          </button>
-          <Link
-            href="/catalogo"
-            className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded text-sm hover:bg-slate-200"
-          >
-            Limpiar
-          </Link>
-        </div>
-      </form>
+            <div className="flex gap-2">
+              <Button type="submit">
+                <Search className="mr-2 h-4 w-4" />
+                Filtrar
+              </Button>
+              <Button type="button" variant="outline" asChild>
+                <Link href="/catalogo">
+                  <X className="mr-2 h-4 w-4" />
+                  Limpiar
+                </Link>
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
 
       {/* Results */}
       {filtrados.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-slate-600">No hay elementos que coincidan con el filtro.</p>
-          <Link
-            href="/catalogo"
-            className="mt-4 inline-block text-sm text-amber-600 hover:text-amber-700"
-          >
-            Ver todos los elementos
-          </Link>
-        </div>
+        <Card className="text-center py-12">
+          <CardContent className="pt-6">
+            <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-lg font-medium text-foreground mb-2">No hay resultados</p>
+            <p className="text-sm text-muted-foreground mb-4">
+              No se encontraron elementos que coincidan con los filtros aplicados
+            </p>
+            <Button variant="outline" asChild>
+              <Link href="/catalogo">Ver todos los elementos</Link>
+            </Button>
+          </CardContent>
+        </Card>
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filtrados.map((it) => (
-              <div
+              <Card
                 key={it.id}
                 id={`item-${it.id}`}
-                className="relative group bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow"
+                className="group overflow-hidden hover:shadow-lg transition-all duration-300"
               >
-                <Link
-                  href={`/catalogo/${it.id}${queryString}`}
-                  className="block bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-all duration-200"
-                >
-                  <div className="aspect-[4/3] bg-slate-100 overflow-hidden">
+                <Link href={`/catalogo/${it.id}${queryString}`} className="block">
+                  <div className="aspect-[4/3] bg-muted overflow-hidden relative">
                     <OptimizedImage
                       src={it.data.image_url}
                       alt={it.data.descripcion_breve || it.data.tipo_objeto}
@@ -295,29 +310,30 @@ export default async function CatalogoPage({
                       sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw"
                       quality={75}
                       loading="lazy"
-                      className="object-contain object-center"
+                      className="object-contain object-center transition-transform group-hover:scale-105"
                       containerClassName="w-full h-full"
                       fallbackText="Sin imagen"
                     />
+                    <Link
+                      href={`/catalogo/${it.id}${queryString}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="absolute top-2 right-2 bg-background/95 border rounded-md p-2 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </Link>
                   </div>
-                  <div className="p-4">
-                    <h3 className="text-sm font-semibold text-slate-800">
+                  <CardHeader>
+                    <CardTitle className="text-base line-clamp-2">
                       {it.data.descripcion_breve || it.data.tipo_objeto}
-                    </h3>
-                    <p className="text-xs text-slate-600 mt-1">
+                    </CardTitle>
+                    <CardDescription>
                       {it.data.categoria} · {it.data.datacion_aproximada || it.data.siglos_estimados}
-                    </p>
-                  </div>
+                    </CardDescription>
+                  </CardHeader>
                 </Link>
-                <Link
-                  href={`/catalogo/${it.id}${queryString}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="absolute top-2 right-2 bg-white/90 border border-slate-200 rounded p-1 shadow-sm opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
-                >
-                  <Image src="/window.svg" alt="Abrir en nueva pestaña" width={16} height={16} />
-                </Link>
-              </div>
+              </Card>
             ))}
           </div>
 
@@ -341,8 +357,8 @@ export default async function CatalogoPage({
         </>
       )}
 
-      <footer className="text-center mt-10 text-sm text-gray-500">
-        <p>💡Creado por: Manuel Carrasco García</p>
+      <footer className="text-center mt-10 text-sm text-muted-foreground">
+        <p>Creado por: Manuel Carrasco García</p>
       </footer>
     </div>
   )
