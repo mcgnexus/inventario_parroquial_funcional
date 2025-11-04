@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { getSupabaseBrowser } from '@/lib/auth'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { AlertCircle, CheckCircle2, Clock, XCircle } from 'lucide-react'
+import { Clock, XCircle } from 'lucide-react'
 
 interface SubscriptionInfo {
   user_status: string
@@ -59,17 +58,6 @@ export default function SubscriptionStatus() {
     return null // No mostrar a admins
   }
 
-  const getDaysRemaining = () => {
-    if (!info.subscription_end) return null
-    const end = new Date(info.subscription_end)
-    const now = new Date()
-    const diffTime = end.getTime() - now.getTime()
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    return diffDays
-  }
-
-  const daysRemaining = getDaysRemaining()
-
   // Estado: Pendiente de aprobación
   if (info.user_status === 'pending') {
     return (
@@ -81,171 +69,35 @@ export default function SubscriptionStatus() {
             Tu cuenta está siendo revisada por el administrador de la Diócesis de Guadix.
           </p>
           <p className="text-sm text-muted-foreground">
-            Recibirás un email cuando tu cuenta sea aprobada y podrás proceder con el pago.
+            Recibirás confirmación cuando tu cuenta sea aprobada.
           </p>
         </AlertDescription>
       </Alert>
     )
   }
 
-  // Estado: Aprobado pero sin pago
-  if (info.user_status === 'approved_unpaid') {
-    return (
-      <div className="space-y-4">
-        <Alert className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
-          <CheckCircle2 className="h-4 w-4 text-blue-600" />
-          <AlertTitle className="text-blue-800 dark:text-blue-100">¡Cuenta aprobada! Último paso: Realizar el pago</AlertTitle>
-          <AlertDescription className="mt-2 space-y-3">
-            <p className="text-blue-700 dark:text-blue-200">
-              Tu cuenta ha sido aprobada por el administrador. Para activar el acceso completo, realiza la colaboración de{' '}
-              <strong className="text-lg">10€/mes</strong>.
-            </p>
-          </AlertDescription>
-        </Alert>
-
-        <Card className="border-2 border-primary">
-          <CardHeader className="bg-primary/5">
-            <CardTitle className="flex items-center gap-2">
-              <span className="text-2xl">💳</span>
-              Instrucciones de pago
-            </CardTitle>
-            <CardDescription>Elige tu método preferido</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 pt-6">
-            {/* BIZUM - OPCIÓN PRINCIPAL */}
-            <div className="rounded-lg border-2 border-green-500 bg-green-50 dark:bg-green-950 p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-2xl">📱</span>
-                <strong className="text-lg text-green-800 dark:text-green-100">Opción 1 - Bizum (Recomendado)</strong>
-              </div>
-              <div className="space-y-2">
-                <div className="bg-white dark:bg-gray-900 rounded-md p-3 border border-green-200">
-                  <p className="text-sm text-muted-foreground mb-1">Enviar Bizum a:</p>
-                  <p className="text-3xl font-bold text-green-700 dark:text-green-300 tracking-wider">
-                    614 242 716
-                  </p>
-                </div>
-                <div className="bg-white dark:bg-gray-900 rounded-md p-3 border border-green-200">
-                  <p className="text-sm text-muted-foreground mb-1">Concepto:</p>
-                  <p className="text-lg font-semibold">Inventarios Diocesano</p>
-                </div>
-                <div className="bg-white dark:bg-gray-900 rounded-md p-3 border border-green-200">
-                  <p className="text-sm text-muted-foreground mb-1">Importe:</p>
-                  <p className="text-lg font-semibold">10,00 €</p>
-                </div>
-              </div>
-            </div>
-
-            {/* TRANSFERENCIA - OPCIÓN ALTERNATIVA */}
-            <div className="rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-2xl">🏦</span>
-                <strong className="text-base text-gray-800 dark:text-gray-100">Opción 2 - Transferencia bancaria</strong>
-              </div>
-              <div className="space-y-2 text-sm">
-                <div>
-                  <span className="text-muted-foreground">IBAN:</span>
-                  <p className="font-mono font-semibold">ES12 3456 7890 1234 5678 9012</p>
-                  <p className="text-xs text-red-600 dark:text-red-400">← Reemplaza con tu IBAN real</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Beneficiario:</span>
-                  <p className="font-semibold">Diócesis de Guadix</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Concepto:</span>
-                  <p className="font-semibold">Inventarios - [Tu email]</p>
-                </div>
-              </div>
-            </div>
-
-            {/* INSTRUCCIONES FINALES */}
-            <div className="rounded-lg bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 p-4">
-              <p className="font-semibold mb-2 text-amber-900 dark:text-amber-100">📧 Después de realizar el pago:</p>
-              <ol className="list-decimal list-inside space-y-1 text-sm text-amber-800 dark:text-amber-200">
-                <li>Haz captura del comprobante de pago</li>
-                <li>Envíalo por email a: <strong>mcgnexus@gmail.com</strong></li>
-                <li>Incluye tu email de registro en el mensaje</li>
-              </ol>
-              <p className="mt-3 text-xs text-amber-700 dark:text-amber-300">
-                ⏱️ Tu acceso se activará en menos de 24 horas (normalmente en pocas horas).
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
-  // Estado: Activo
+  // Estado: Activo - Mostrar mensaje discreto de colaboración opcional
   if (info.user_status === 'active') {
-    const isExpiringSoon = daysRemaining !== null && daysRemaining <= 7
-    const isExpired = daysRemaining !== null && daysRemaining < 0
-
-    if (isExpired) {
-      return (
-        <Alert variant="destructive">
-          <XCircle className="h-4 w-4" />
-          <AlertTitle>Suscripción expirada</AlertTitle>
-          <AlertDescription className="mt-2">
-            <p>
-              Tu suscripción expiró el{' '}
-              {info.subscription_end
-                ? new Date(info.subscription_end).toLocaleDateString('es-ES')
-                : 'fecha desconocida'}
-              .
-            </p>
-            <p className="mt-2">
-              Para renovar, realiza el pago de <strong>10€</strong> y contacta al administrador.
-            </p>
-          </AlertDescription>
-        </Alert>
-      )
-    }
-
-    if (isExpiringSoon) {
-      return (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Suscripción por expirar</AlertTitle>
-          <AlertDescription className="mt-2">
-            <p>
-              Tu suscripción expira en <strong>{daysRemaining} días</strong> (
-              {info.subscription_end
-                ? new Date(info.subscription_end).toLocaleDateString('es-ES')
-                : 'fecha desconocida'}
-              ).
-            </p>
-            <p className="mt-2">
-              Recuerda renovar tu pago de <strong>10€/mes</strong> para mantener el acceso.
-            </p>
-          </AlertDescription>
-        </Alert>
-      )
-    }
-
-    // Todo bien
     return (
-      <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950">
+      <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Suscripción activa</CardTitle>
-            <Badge variant="default">Activo</Badge>
-          </div>
+          <CardTitle className="text-base flex items-center gap-2">
+            <span>💙</span>
+            Colaboración voluntaria
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Tu acceso es válido hasta el{' '}
-            <strong>
-              {info.subscription_end
-                ? new Date(info.subscription_end).toLocaleDateString('es-ES', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric',
-                  })
-                : 'fecha desconocida'}
-            </strong>{' '}
-            ({daysRemaining} días restantes).
+          <p className="text-sm text-muted-foreground mb-3">
+            Si deseas colaborar con el mantenimiento de esta aplicación, puedes enviar tu aportación voluntaria por Bizum:
+          </p>
+          <div className="bg-white dark:bg-gray-900 rounded-md p-3 border border-blue-200 inline-block">
+            <p className="text-xs text-muted-foreground mb-1">Bizum (opcional):</p>
+            <p className="text-xl font-semibold text-blue-700 dark:text-blue-300">
+              614 242 716
+            </p>
+          </div>
+          <p className="text-xs text-muted-foreground mt-3 italic">
+            Tu colaboración ayuda a mantener el servicio, pero es completamente opcional.
           </p>
         </CardContent>
       </Card>

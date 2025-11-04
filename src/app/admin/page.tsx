@@ -14,17 +14,6 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
 
@@ -44,22 +33,11 @@ interface UserData {
   items_count: number
 }
 
-interface PaymentDialogData {
-  userId: string
-  userName: string
-  userEmail: string
-  currentStatus: string
-}
-
 export default function AdminPanel() {
   const [users, setUsers] = useState<UserData[]>([])
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
-  const [paymentDialog, setPaymentDialog] = useState<PaymentDialogData | null>(null)
-  const [paymentAmount, setPaymentAmount] = useState('10.00')
-  const [paymentReference, setPaymentReference] = useState('')
-  const [paymentNotes, setPaymentNotes] = useState('')
-  const [approvalNotes, setApprovalNotes] = useState('')
+  const [approvalNotes] = useState('')
   const { toast } = useToast()
   const router = useRouter()
 
@@ -141,17 +119,16 @@ export default function AdminPanel() {
     try {
       const { error } = await supabase.rpc('approve_user', {
         target_user_id: userId,
-        admin_notes: approvalNotes || null,
+        admin_notes: approvalNotes || 'Usuario aprobado - acceso concedido',
       })
 
       if (error) throw error
 
       toast({
         title: 'Usuario aprobado',
-        description: 'El usuario ha sido aprobado. Ahora debe realizar el pago.',
+        description: 'El usuario tiene acceso completo a la aplicación.',
       })
 
-      setApprovalNotes('')
       await loadUsers()
     } catch (error) {
       console.error('Error aprobando usuario:', error)
@@ -163,72 +140,6 @@ export default function AdminPanel() {
     }
   }
 
-  async function activateSubscription() {
-    if (!paymentDialog) return
-
-    const supabase = getSupabaseBrowser()
-    if (!supabase) return
-
-    try {
-      const { error } = await supabase.rpc('activate_subscription', {
-        target_user_id: paymentDialog.userId,
-        payment_amount: parseFloat(paymentAmount),
-        payment_ref: paymentReference || null,
-        method: 'manual',
-        admin_notes: paymentNotes || null,
-      })
-
-      if (error) throw error
-
-      toast({
-        title: 'Suscripción activada',
-        description: `${paymentDialog.userName} ahora tiene acceso completo por 1 mes`,
-      })
-
-      setPaymentDialog(null)
-      setPaymentAmount('10.00')
-      setPaymentReference('')
-      setPaymentNotes('')
-      await loadUsers()
-    } catch (error) {
-      console.error('Error activando suscripción:', error)
-      toast({
-        title: 'Error',
-        description: 'No se pudo activar la suscripción',
-        variant: 'destructive',
-      })
-    }
-  }
-
-  async function renewSubscription(userId: string, userName: string) {
-    const supabase = getSupabaseBrowser()
-    if (!supabase) return
-
-    try {
-      const { error } = await supabase.rpc('renew_subscription', {
-        target_user_id: userId,
-        payment_amount: 10.00,
-        payment_ref: null,
-        admin_notes: 'Renovación manual',
-      })
-
-      if (error) throw error
-
-      toast({
-        title: 'Suscripción renovada',
-        description: `${userName} tiene 1 mes más de acceso`,
-      })
-
-      await loadUsers()
-    } catch (error) {
-      console.error('Error renovando suscripción:', error)
-      toast({
-        title: 'Error',
-        description: 'No se pudo renovar la suscripción',
-        variant: 'destructive',
-      })
-    }
-  }
 
   async function suspendUser(userId: string, userName: string) {
     const supabase = getSupabaseBrowser()
@@ -264,7 +175,6 @@ export default function AdminPanel() {
   function getStatusBadge(status: string) {
     const variants: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
       pending: { label: 'Pendiente aprobación', variant: 'outline' },
-      approved_unpaid: { label: 'Aprobado - Sin pago', variant: 'secondary' },
       active: { label: 'Activo', variant: 'default' },
       suspended: { label: 'Suspendido', variant: 'destructive' },
       rejected: { label: 'Rechazado', variant: 'destructive' },
@@ -274,22 +184,8 @@ export default function AdminPanel() {
     return <Badge variant={config.variant}>{config.label}</Badge>
   }
 
-  function getSubscriptionBadge(status: string) {
-    const variants: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-      'Sin suscripción': { variant: 'outline' },
-      'Expirado': { variant: 'destructive' },
-      'Por expirar': { variant: 'secondary' },
-      'Activo': { variant: 'default' },
-    }
-
-    const config = variants[status] || { variant: 'outline' as const }
-    return <Badge variant={config.variant}>{status}</Badge>
-  }
-
   const pendingUsers = users.filter(u => u.user_status === 'pending')
-  const approvedUnpaidUsers = users.filter(u => u.user_status === 'approved_unpaid')
   const activeUsers = users.filter(u => u.user_status === 'active')
-  const expiringUsers = activeUsers.filter(u => u.subscription_status === 'Por expirar')
 
   if (!isAdmin) {
     return (
@@ -326,17 +222,11 @@ export default function AdminPanel() {
       </div>
 
       {/* Resumen de estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>Pendientes de aprobación</CardDescription>
             <CardTitle className="text-3xl">{pendingUsers.length}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Aprobados sin pago</CardDescription>
-            <CardTitle className="text-3xl">{approvedUnpaidUsers.length}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
@@ -347,20 +237,17 @@ export default function AdminPanel() {
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardDescription>Por expirar (7 días)</CardDescription>
-            <CardTitle className="text-3xl">{expiringUsers.length}</CardTitle>
+            <CardDescription>Total de usuarios</CardDescription>
+            <CardTitle className="text-3xl">{users.length}</CardTitle>
           </CardHeader>
         </Card>
       </div>
 
       {/* Tabs con diferentes vistas */}
       <Tabs defaultValue="pending" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="pending">
             Pendientes ({pendingUsers.length})
-          </TabsTrigger>
-          <TabsTrigger value="unpaid">
-            Sin pago ({approvedUnpaidUsers.length})
           </TabsTrigger>
           <TabsTrigger value="active">
             Activos ({activeUsers.length})
@@ -430,69 +317,13 @@ export default function AdminPanel() {
           </Card>
         </TabsContent>
 
-        {/* Usuarios aprobados sin pago */}
-        <TabsContent value="unpaid">
-          <Card>
-            <CardHeader>
-              <CardTitle>Usuarios aprobados esperando pago</CardTitle>
-              <CardDescription>
-                Usuarios autorizados que deben realizar el pago de 10€/mes
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {approvedUnpaidUsers.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  No hay usuarios en esta categoría
-                </p>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nombre</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Parroquia</TableHead>
-                      <TableHead>Aprobado hace</TableHead>
-                      <TableHead>Acciones</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {approvedUnpaidUsers.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell className="font-medium">{user.full_name}</TableCell>
-                        <TableCell>{user.email}</TableCell>
-                        <TableCell>{user.parish_name || 'Sin asignar'}</TableCell>
-                        <TableCell>
-                          {new Date(user.registered_at).toLocaleDateString('es-ES')}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            size="sm"
-                            onClick={() => setPaymentDialog({
-                              userId: user.id,
-                              userName: user.full_name,
-                              userEmail: user.email,
-                              currentStatus: user.user_status,
-                            })}
-                          >
-                            Registrar pago
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
         {/* Usuarios activos */}
         <TabsContent value="active">
           <Card>
             <CardHeader>
               <CardTitle>Usuarios activos</CardTitle>
               <CardDescription>
-                Usuarios con suscripción activa
+                Usuarios con acceso aprobado a la aplicación
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -506,9 +337,8 @@ export default function AdminPanel() {
                     <TableRow>
                       <TableHead>Nombre</TableHead>
                       <TableHead>Email</TableHead>
-                      <TableHead>Items</TableHead>
-                      <TableHead>Suscripción hasta</TableHead>
-                      <TableHead>Estado</TableHead>
+                      <TableHead>Parroquia</TableHead>
+                      <TableHead>Items catalogados</TableHead>
                       <TableHead>Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -517,32 +347,16 @@ export default function AdminPanel() {
                       <TableRow key={user.id}>
                         <TableCell className="font-medium">{user.full_name}</TableCell>
                         <TableCell>{user.email}</TableCell>
-                        <TableCell>{user.items_count}</TableCell>
+                        <TableCell>{user.parish_name || 'Sin asignar'}</TableCell>
+                        <TableCell className="text-center">{user.items_count}</TableCell>
                         <TableCell>
-                          {user.subscription_end
-                            ? new Date(user.subscription_end).toLocaleDateString('es-ES')
-                            : 'N/A'}
-                        </TableCell>
-                        <TableCell>
-                          {getSubscriptionBadge(user.subscription_status)}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => renewSubscription(user.id, user.full_name)}
-                            >
-                              Renovar
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => suspendUser(user.id, user.full_name)}
-                            >
-                              Suspender
-                            </Button>
-                          </div>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => suspendUser(user.id, user.full_name)}
+                          >
+                            Suspender
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -568,7 +382,6 @@ export default function AdminPanel() {
                     <TableHead>Email</TableHead>
                     <TableHead>Parroquia</TableHead>
                     <TableHead>Estado</TableHead>
-                    <TableHead>Suscripción</TableHead>
                     <TableHead>Items</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -579,8 +392,7 @@ export default function AdminPanel() {
                       <TableCell>{user.email}</TableCell>
                       <TableCell>{user.parish_name || 'Sin asignar'}</TableCell>
                       <TableCell>{getStatusBadge(user.user_status)}</TableCell>
-                      <TableCell>{getSubscriptionBadge(user.subscription_status)}</TableCell>
-                      <TableCell>{user.items_count}</TableCell>
+                      <TableCell className="text-center">{user.items_count}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -589,56 +401,6 @@ export default function AdminPanel() {
           </Card>
         </TabsContent>
       </Tabs>
-
-      {/* Dialog para registrar pago */}
-      <Dialog open={!!paymentDialog} onOpenChange={() => setPaymentDialog(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Registrar pago de suscripción</DialogTitle>
-            <DialogDescription>
-              Activar suscripción para {paymentDialog?.userName}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="amount">Monto (€)</Label>
-              <Input
-                id="amount"
-                type="number"
-                step="0.01"
-                value={paymentAmount}
-                onChange={(e) => setPaymentAmount(e.target.value)}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="reference">Referencia de pago (opcional)</Label>
-              <Input
-                id="reference"
-                placeholder="Número Bizum, ID Ko-fi, etc."
-                value={paymentReference}
-                onChange={(e) => setPaymentReference(e.target.value)}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="notes">Notas (opcional)</Label>
-              <Textarea
-                id="notes"
-                placeholder="Información adicional sobre el pago"
-                value={paymentNotes}
-                onChange={(e) => setPaymentNotes(e.target.value)}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setPaymentDialog(null)}>
-              Cancelar
-            </Button>
-            <Button onClick={activateSubscription}>
-              Activar suscripción (1 mes)
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

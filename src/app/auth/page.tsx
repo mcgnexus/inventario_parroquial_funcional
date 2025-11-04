@@ -506,8 +506,8 @@ function AuthPageContent() {
                     <p className="font-medium mb-2">Próximos pasos:</p>
                     <ol className="list-decimal list-inside space-y-1 text-green-700 dark:text-green-200">
                       <li>El administrador revisará tu solicitud</li>
-                      <li>Recibirás las instrucciones de pago por email</li>
-                      <li>Una vez aprobado y pagado, podrás acceder</li>
+                      <li>Recibirás confirmación por email cuando sea aprobada</li>
+                      <li>Podrás iniciar sesión y usar la aplicación</li>
                     </ol>
                   </div>
                   <div className="text-xs text-green-600 dark:text-green-300 pt-2 border-t border-green-200 dark:border-green-800">
