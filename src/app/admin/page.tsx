@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { getSupabaseBrowser } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -63,11 +63,33 @@ export default function AdminPanel() {
   const { toast } = useToast()
   const router = useRouter()
 
-  useEffect(() => {
-    checkAdminAndLoadData()
-  }, [])
+  const loadUsers = useCallback(async () => {
+    const supabase = getSupabaseBrowser()
+    if (!supabase) return
 
-  async function checkAdminAndLoadData() {
+    try {
+      setLoading(true)
+      const { data, error } = await supabase
+        .from('admin_users_dashboard')
+        .select('*')
+        .order('registered_at', { ascending: false })
+
+      if (error) throw error
+
+      setUsers(data || [])
+    } catch (error) {
+      console.error('Error cargando usuarios:', error)
+      toast({
+        title: 'Error',
+        description: 'No se pudieron cargar los usuarios',
+        variant: 'destructive',
+      })
+    } finally {
+      setLoading(false)
+    }
+  }, [toast])
+
+  const checkAdminAndLoadData = useCallback(async () => {
     const supabase = getSupabaseBrowser()
     if (!supabase) {
       router.push('/auth')
@@ -104,33 +126,13 @@ export default function AdminPanel() {
       console.error('Error verificando admin:', error)
       router.push('/auth')
     }
-  }
+  }, [router, toast, loadUsers])
 
-  async function loadUsers() {
-    const supabase = getSupabaseBrowser()
-    if (!supabase) return
+  useEffect(() => {
+    checkAdminAndLoadData()
+  }, [checkAdminAndLoadData])
 
-    try {
-      setLoading(true)
-      const { data, error } = await supabase
-        .from('admin_users_dashboard')
-        .select('*')
-        .order('registered_at', { ascending: false })
-
-      if (error) throw error
-
-      setUsers(data || [])
-    } catch (error) {
-      console.error('Error cargando usuarios:', error)
-      toast({
-        title: 'Error',
-        description: 'No se pudieron cargar los usuarios',
-        variant: 'destructive',
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
+  
 
   async function approveUser(userId: string) {
     const supabase = getSupabaseBrowser()
@@ -295,6 +297,19 @@ export default function AdminPanel() {
         <Card>
           <CardHeader>
             <CardTitle>Verificando permisos...</CardTitle>
+          </CardHeader>
+        </Card>
+      </div>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="container mx-auto p-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Cargando usuarios…</CardTitle>
+            <CardDescription>Por favor, espera unos segundos.</CardDescription>
           </CardHeader>
         </Card>
       </div>
