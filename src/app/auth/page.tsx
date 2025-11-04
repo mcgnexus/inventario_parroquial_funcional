@@ -30,9 +30,10 @@ function AuthPageContent() {
   const [parishOpen, setParishOpen] = useState(false)
   const [parishLoading, setParishLoading] = useState(false)
   const [selectedParishId, setSelectedParishId] = useState<string | null>(null)
-  const [role, setRole] = useState('user')
+  const [role] = useState('user') // Siempre 'user', no permitir cambiar
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [registrationSuccess, setRegistrationSuccess] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -209,26 +210,25 @@ function AuthPageContent() {
     setLoading(true)
     setError(null)
     try {
-      const user = await signUpWithProfile({
+      await signUpWithProfile({
         email: email.trim(),
         password,
         fullName: fullName.trim(),
-        role,
+        role, // Siempre 'user'
         parishId: selectedParishId || (parishId.trim() || undefined),
       })
-      setUserId(user?.id ?? null)
-      // Redirigir si hay sesión activa tras registro
-      const sb = getSupabaseBrowser()
-      if (sb) {
-        const { data } = await sb.auth.getSession()
-        if (data?.session) {
-          router.push('/inventario')
-        } else {
-          setMode('login')
-        }
-      } else {
-        setMode('login')
-      }
+
+      // Mostrar mensaje de éxito
+      setRegistrationSuccess(true)
+
+      // Limpiar formulario
+      setEmail('')
+      setPassword('')
+      setConfirmPassword('')
+      setFullName('')
+      setParishId('')
+      setSelectedParishId(null)
+
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Error al registrar usuario'
       setError(msg)
@@ -238,16 +238,22 @@ function AuthPageContent() {
   }
 
   const handleSignOut = async () => {
-    setLoading(true)
-    setError(null)
+    console.log('[AuthPage] Iniciando handleSignOut');
+    setLoading(true);
+    setError(null);
     try {
-      await signOut()
-      setUserId(null)
+      await signOut();
+      console.log('[AuthPage] signOut completado');
+      setUserId(null);
+      console.log('[AuthPage] userId establecido a null');
+      router.push('/');
+      console.log('[AuthPage] Redirigido a /');
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Error al cerrar sesión'
-      setError(msg)
+      console.error('[AuthPage] Error en handleSignOut:', e);
+      const msg = e instanceof Error ? e.message : 'Error al cerrar sesión';
+      setError(msg);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
@@ -484,18 +490,43 @@ function AuthPageContent() {
                 )}
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="role">Rol</Label>
-              <select
-                id="role"
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              >
-                <option value="user">Usuario</option>
-                <option value="admin">Administrador</option>
-              </select>
-            </div>
+
+            {registrationSuccess && (
+              <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base text-green-800 dark:text-green-100">
+                    ✅ Registro exitoso
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                  <p className="text-green-700 dark:text-green-200">
+                    Tu cuenta ha sido creada correctamente.
+                  </p>
+                  <div className="rounded-md bg-white dark:bg-gray-900 p-3 border border-green-200 dark:border-green-800">
+                    <p className="font-medium mb-2">Próximos pasos:</p>
+                    <ol className="list-decimal list-inside space-y-1 text-green-700 dark:text-green-200">
+                      <li>El administrador revisará tu solicitud</li>
+                      <li>Recibirás las instrucciones de pago por email</li>
+                      <li>Una vez aprobado y pagado, podrás acceder</li>
+                    </ol>
+                  </div>
+                  <div className="text-xs text-green-600 dark:text-green-300 pt-2 border-t border-green-200 dark:border-green-800">
+                    <p><strong>Importante:</strong> No podrás iniciar sesión hasta que tu cuenta sea aprobada por el administrador de la Diócesis de Guadix.</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setRegistrationSuccess(false)
+                      setMode('login')
+                    }}
+                    className="w-full mt-3"
+                  >
+                    Ir a inicio de sesión
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
 
             {error && (
               <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive border border-destructive/20">

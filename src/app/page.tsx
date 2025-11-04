@@ -3,23 +3,35 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { getCurrentUser, onAuthStateChange, signOut } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
-import { LogIn, UserPlus, FileText, PlusCircle, LogOut, Church } from 'lucide-react'
+import { LogIn, UserPlus, FileText, PlusCircle, LogOut, Church, Settings } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import SubscriptionStatus from '@/components/SubscriptionStatus'
 
 export default function Home() {
   const [userEmail, setUserEmail] = useState<string | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
     let unsub: (() => void) | null = null
     ;(async () => {
       const u = await getCurrentUser()
       setUserEmail(u?.email ?? null)
+
+      // Verificar si es admin
+      if (u?.email === 'mcgnexus@gmail.com') {
+        setIsAdmin(true)
+      }
     })()
     unsub = onAuthStateChange(() => {
       getCurrentUser().then(u => {
         setUserEmail(u?.email ?? null)
+        if (u?.email === 'mcgnexus@gmail.com') {
+          setIsAdmin(true)
+        } else {
+          setIsAdmin(false)
+        }
       })
     })
     return () => { unsub?.() }
@@ -27,10 +39,19 @@ export default function Home() {
 
   const router = useRouter()
   const handleSignOut = async () => {
-    await signOut()
-    setUserEmail(null)
-    router.refresh()
+  console.log('[Home] Iniciando handleSignOut');
+  try {
+    await signOut();
+    console.log('[Home] signOut completado');
+    setUserEmail(null);
+    console.log('[Home] userEmail establecido a null');
+    router.push('/');
+    console.log('[Home] Redirigido a /');
+  } catch (error) {
+    console.error('[Home] Error en handleSignOut:', error);
+    // Opcional: mostrar un mensaje de error en la UI
   }
+}
 
   return (
     <main className="min-h-screen bg-background py-8 sm:py-12 px-3 sm:px-4">
@@ -50,13 +71,20 @@ export default function Home() {
             Catalogación asistida por IA para el patrimonio de la Diócesis
           </p>
           {userEmail && (
-            <div className="mt-4">
+            <div className="mt-4 space-y-2">
               <Badge variant="secondary" className="text-sm">
                 Sesión activa: {userEmail}
               </Badge>
             </div>
           )}
         </header>
+
+        {/* Estado de suscripción - Solo visible si hay sesión */}
+        {userEmail && (
+          <div className="mb-8">
+            <SubscriptionStatus />
+          </div>
+        )}
 
         {/* Grid de acciones principales */}
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
@@ -102,6 +130,26 @@ export default function Home() {
               </CardHeader>
             </Card>
           </Link>
+
+          {/* Panel de Administración - Solo visible para admin */}
+          {isAdmin && (
+            <Link href="/admin" className="group">
+              <Card className="h-full transition-all hover:shadow-lg hover:border-primary/50 border-2 border-primary">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <Settings className="h-8 w-8 text-primary group-hover:scale-110 transition-transform" />
+                    <Badge className="bg-primary text-primary-foreground">Admin</Badge>
+                  </div>
+                  <CardTitle className="group-hover:text-primary transition-colors">
+                    Panel de Administración
+                  </CardTitle>
+                  <CardDescription>
+                    Gestiona usuarios, aprobaciones y suscripciones
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            </Link>
+          )}
 
           {/* Iniciar sesión */}
           {!userEmail && (

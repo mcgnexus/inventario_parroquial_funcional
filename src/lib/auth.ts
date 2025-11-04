@@ -134,27 +134,49 @@ export async function signInWithEmail(email: string, password: string) {
 }
 
 export async function signOut() {
+  console.log('[Auth] Iniciando signOut');
   const sb = getSupabaseBrowser()
-  if (!sb) return
-  await sb.auth.signOut()
-  // Purga defensiva de artefactos locales para evitar estados inválidos persistentes
+  if (!sb) {
+    console.log('[Auth] Supabase no disponible, abortando signOut');
+    return;
+  }
+  try {
+    console.log('[Auth] Llamando a sb.auth.signOut()');
+    const { error } = await sb.auth.signOut();
+    if (error) {
+      console.error('[Auth] Error en sb.auth.signOut:', error.message);
+      throw error;
+    }
+    console.log('[Auth] sb.auth.signOut completado exitosamente');
+  } catch (e) {
+    console.error('[Auth] Excepción en signOut:', e);
+    throw e;
+  }
+  // Purga defensiva de artefactos locales
+  console.log('[Auth] Iniciando purga de artefactos locales');
   try {
     if (typeof window !== 'undefined') {
       Object.keys(localStorage)
         .filter((k) => k.startsWith('sb-'))
-        .forEach((k) => localStorage.removeItem(k))
-      const cookies = document.cookie.split('; ')
+        .forEach((k) => {
+          console.log('[Auth] Eliminando localStorage:', k);
+          localStorage.removeItem(k);
+        });
+      const cookies = document.cookie.split('; ');
       cookies.forEach((cookie) => {
-        const name = cookie.split('=')[0]
+        const name = cookie.split('=')[0];
         if (name.startsWith('sb-')) {
-          document.cookie = `${name}=; max-age=0; path=/`
+          console.log('[Auth] Eliminando cookie:', name);
+          document.cookie = `${name}=; max-age=0; path=/`;
         }
-      })
+      });
     }
+    console.log('[Auth] Purga completada');
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e)
-    console.warn('[Auth] Falló purga de artefactos locales en signOut:', msg)
+    const msg = e instanceof Error ? e.message : String(e);
+    console.warn('[Auth] Falló purga de artefactos locales en signOut:', msg);
   }
+  console.log('[Auth] signOut completado');
 }
 
 export async function getCurrentUser() {
@@ -228,6 +250,8 @@ export async function signUpWithProfile({
   if (!user) throw new Error('No se pudo registrar el usuario')
 
   // Intentar crear/actualizar perfil en tabla profiles
+  // IMPORTANTE: Siempre crear usuarios con role='user' y user_status='pending'
+  // Solo el admin puede aprobar usuarios
   try {
     const hasSession = !!data.session
     if (hasSession) {
@@ -237,7 +261,8 @@ export async function signUpWithProfile({
           id: user.id,
           full_name: fullName,
           email,
-          role,
+          role: 'user', // Forzar role='user' siempre (ignorar parámetro)
+          user_status: 'pending', // Usuarios nuevos empiezan como "pending"
           parish_id: resolvedParishId || null,
         })
       if (profileError) {
@@ -251,7 +276,8 @@ export async function signUpWithProfile({
               id: user.id,
               full_name: fullName,
               email,
-              role,
+              role: 'user', // Forzar role='user' siempre
+              user_status: 'pending', // Usuarios nuevos empiezan como "pending"
               parish_id: resolvedParishId || null,
             }),
           })
@@ -266,7 +292,8 @@ export async function signUpWithProfile({
           id: user.id,
           full_name: fullName,
           email,
-          role,
+          role: 'user', // Forzar role='user' siempre
+          user_status: 'pending', // Usuarios nuevos empiezan como "pending"
           parish_id: resolvedParishId || null,
         }),
       })
@@ -275,6 +302,11 @@ export async function signUpWithProfile({
     const msg = e instanceof Error ? e.message : String(e)
     console.warn('⚠️ Error inesperado al crear perfil:', msg)
   }
+
+  // Cerrar sesión inmediatamente después del registro
+  // El usuario NO debe tener acceso hasta que el admin lo apruebe
+  await sb.auth.signOut()
+
   return user
 }
 

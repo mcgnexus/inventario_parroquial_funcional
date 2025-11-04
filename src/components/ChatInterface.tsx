@@ -18,6 +18,7 @@ import {
 // Hooks y componentes
 import { useInventory } from '@/hooks/useInventory'
 import ImageUploader from './ImageUploader'
+import SelectedImagePreview from './SelectedImagePreview'
 import ConversationList from './ConversationList'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -68,7 +69,7 @@ export default function ChatInterface() {
   } = useInventory()
 
   return (
-    <div className="flex flex-col min-h-[100dvh] max-w-6xl mx-auto bg-background rounded-xl shadow-2xl overflow-hidden border">
+    <div className="flex flex-col min-h-[100dvh] max-w-6xl mx-auto bg-background rounded-xl shadow-2xl border">
       {/* ENCABEZADO */}
       <div className="bg-primary text-primary-foreground p-4 border-b-4 border-primary">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
@@ -196,28 +197,30 @@ export default function ChatInterface() {
         </div>
       )}
 
-      {/* Preview de imagen */}
-      {previewImagen && (
-        <ImageUploader
-          fileInputRef={fileInputRef}
+      {/* Nombre de archivo seleccionado (fallback accesible para tests) */}
+      {imagenSeleccionada && (
+        <div className="px-5 py-2 border-t bg-muted/30">
+          <span className="text-sm">{imagenSeleccionada.name}</span>
+        </div>
+      )}
+
+      {/* Preview de imagen (sin botón de subir) */}
+      {imagenSeleccionada && (
+        <SelectedImagePreview
           previewImagen={previewImagen}
           imagenSeleccionada={imagenSeleccionada}
-          onSeleccionImagen={manejarSeleccionImagen}
           onLimpiarImagen={limpiarImagen}
-          disabled={cargando}
         />
       )}
 
       {/* ÁREA DE ENTRADA */}
       <div className="border-t-2 p-4 bg-card">
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-wrap items-center">
           <ImageUploader
             fileInputRef={fileInputRef}
-            previewImagen={null}
-            imagenSeleccionada={imagenSeleccionada}
             onSeleccionImagen={manejarSeleccionImagen}
-            onLimpiarImagen={limpiarImagen}
             disabled={cargando}
+            showUploadButton={!imagenSeleccionada}
           />
 
           <Input
@@ -227,7 +230,7 @@ export default function ChatInterface() {
             onKeyDown={manejarKeyPress}
             placeholder="Descripción adicional del objeto (opcional)..."
             disabled={cargando}
-            className="flex-1"
+            className="flex-1 min-w-0"
           />
 
           <Button

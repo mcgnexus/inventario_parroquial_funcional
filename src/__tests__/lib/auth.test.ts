@@ -115,7 +115,7 @@ describe('Auth Library', () => {
   })
 
   describe('signOut', () => {
-    it('should sign out user and clear local storage', async () => {
+    it('should call supabase.auth.signOut and clear local artifacts', async () => {
       const client = getSupabaseBrowser()
       if (!client) throw new Error('Client not initialized')
 
@@ -123,6 +123,8 @@ describe('Auth Library', () => {
       if (typeof window !== 'undefined') {
         localStorage.setItem('sb-test-auth-token', 'mock-token')
         localStorage.setItem('sb-test-refresh-token', 'mock-refresh')
+        // Simular cookie de supabase
+        document.cookie = 'sb-test-auth-token=mock; path=/'
       }
 
       const mockSignOut = vi.fn().mockResolvedValue({ error: null })
@@ -136,6 +138,7 @@ describe('Auth Library', () => {
       if (typeof window !== 'undefined') {
         const sbKeys = Object.keys(localStorage).filter(k => k.startsWith('sb-'))
         expect(sbKeys.length).toBe(0)
+        expect(document.cookie.includes('sb-')).toBe(false)
       }
     })
   })

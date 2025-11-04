@@ -33,7 +33,9 @@ export function useImageUpload(): UseImageUploadReturn {
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const manejarSeleccionImagen = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+    // Preferir leer desde el ref para maximizar compatibilidad con JSDOM
+    const fileFromRef = fileInputRef.current?.files?.[0] ?? null
+    const file = fileFromRef || e.currentTarget.files?.[0] || e.target.files?.[0]
     if (!file) return
 
     // Validar tipo de archivo
