@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter, Lora } from 'next/font/google'
 import './globals.css'
 import NavBar from '@/components/NavBar'
+import Footer from '@/components/Footer'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/toaster'
 
@@ -37,7 +38,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" className={`${inter.variable} ${lora.variable}`} suppressHydrationWarning>
-      <body className="antialiased" suppressHydrationWarning>
+      <body className="antialiased flex flex-col min-h-screen" suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -45,7 +46,10 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <NavBar />
-          {children}
+          <main className="flex-1">
+            {children}
+          </main>
+          <Footer />
           <Toaster />
         </ThemeProvider>
       </body>
