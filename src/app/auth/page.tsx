@@ -1,16 +1,14 @@
 "use client"
 import { useEffect, useState, Suspense } from 'react'
-import { getCurrentUser, signOut, onAuthStateChange, signUpWithProfile, getSupabaseBrowser } from '@/lib/auth'
+import { getCurrentUser, signOut, onAuthStateChange, signUpWithProfile } from '@/lib/auth'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Eye, EyeOff, LogIn, UserPlus, LogOut, User } from 'lucide-react'
-import type { PostgrestError } from '@supabase/supabase-js'
 import type { AuthResponse } from '@supabase/supabase-js'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-
-type ParishOption = { id: string; name: string }
+import ParishSelector from '@/components/ParishSelector'
 export default function AuthPage() {
   return (
     <Suspense fallback={null}>
@@ -25,11 +23,7 @@ function AuthPageContent() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [fullName, setFullName] = useState('')
-  const [parishId, setParishId] = useState('')
-  const [parishOptions, setParishOptions] = useState<{ id: string; name: string }[]>([])
-  const [parishOpen, setParishOpen] = useState(false)
-  const [parishLoading, setParishLoading] = useState(false)
-  const [selectedParishId, setSelectedParishId] = useState<string | null>(null)
+  const [selectedParishId, setSelectedParishId] = useState<string>('')
   const [role] = useState('user') // Siempre 'user', no permitir cambiar
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -69,41 +63,6 @@ function AuthPageContent() {
     })
     return () => { unsubscribe?.() }
   }, [])
-
-  useEffect(() => {
-    const q = parishId.trim()
-    setSelectedParishId(null)
-    if (mode === 'register' && q.length >= 2) {
-      const sb = getSupabaseBrowser()
-      if (!sb) return
-      setParishLoading(true)
-      sb
-        .from('parishes')
-        .select('id,name')
-        .ilike('name', `%${q}%`)
-        .limit(5)
-        .then(({ data, error }: { data: ParishOption[] | null; error: PostgrestError | null }) => {
-          if (error) {
-            console.warn('Error buscando parroquias:', error.message)
-            setParishOptions([])
-            setParishOpen(false)
-            return
-          }
-          setParishOptions(data || [])
-          setParishOpen(!!(data && data.length))
-        })
-        .finally(() => setParishLoading(false))
-    } else {
-      setParishOptions([])
-      setParishOpen(false)
-    }
-  }, [parishId, mode])
-
-  const handleSelectParish = (opt: { id: string; name: string }) => {
-    setParishId(opt.name)
-    setSelectedParishId(opt.id)
-    setParishOpen(false)
-  }
 
   const handleSignIn = async () => {
     console.log('[Auth] Iniciando handleSignIn');
@@ -230,8 +189,7 @@ function AuthPageContent() {
       setPassword('')
       setConfirmPassword('')
       setFullName('')
-      setParishId('')
-      setSelectedParishId(null)
+      setSelectedParishId('')
 
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Error al registrar usuario'
@@ -462,53 +420,22 @@ function AuthPageContent() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="parish" className="flex items-center gap-2">
-                Parroquia <span className="text-destructive">*</span>
-                <span className="text-xs text-muted-foreground font-normal">(obligatorio)</span>
-              </Label>
-              <div className="relative">
-                <Input
-                  id="parish"
-                  type="text"
-                  value={parishId}
-                  onChange={(e) => setParishId(e.target.value)}
-                  placeholder="Escribe para buscar por nombre (mínimo 2 letras)"
-                  onFocus={() => parishOptions.length && setParishOpen(true)}
-                  className={!selectedParishId && parishId ? 'border-amber-500' : ''}
-                  required
-                />
-                {parishOpen && (
-                  <div className="absolute z-10 mt-1 w-full bg-card border border-border rounded-md shadow-lg">
-                    {parishLoading ? (
-                      <div className="px-3 py-2 text-sm text-muted-foreground">Buscando...</div>
-                    ) : parishOptions.length ? (
-                      parishOptions.map((opt) => (
-                        <button
-                          key={opt.id}
-                          type="button"
-                          onClick={() => handleSelectParish(opt)}
-                          className="block w-full text-left px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
-                        >
-                          {opt.name}
-                        </button>
-                      ))
-                    ) : (
-                      <div className="px-3 py-2 text-sm text-muted-foreground">Sin resultados</div>
-                    )}
-                  </div>
-                )}
-                {selectedParishId && (
-                  <p className="text-xs text-green-600 dark:text-green-400 mt-1 flex items-center gap-1">
-                    <span>✓</span>
-                    Parroquia seleccionada correctamente
-                  </p>
-                )}
-                {!selectedParishId && parishId.length >= 2 && !parishLoading && parishOptions.length === 0 && (
-                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                    No se encontraron parroquias. Intenta con otro nombre.
-                  </p>
-                )}
-              </div>
+              <ParishSelector
+                value={selectedParishId}
+                onChange={(parishId) => setSelectedParishId(parishId)}
+              />
+              {!selectedParishId && (
+                <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+                  <span>*</span>
+                  Debes seleccionar una parroquia para continuar
+                </p>
+              )}
+              {selectedParishId && (
+                <p className="text-xs text-green-600 dark:text-green-400 mt-1 flex items-center gap-1">
+                  <span>✓</span>
+                  Parroquia seleccionada correctamente
+                </p>
+              )}
             </div>
 
             {registrationSuccess && (
