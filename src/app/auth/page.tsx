@@ -203,6 +203,10 @@ function AuthPageContent() {
       setError('Completa nombre, email y contraseña')
       return
     }
+    if (!selectedParishId) {
+      setError('Debes seleccionar una parroquia de la lista')
+      return
+    }
     if (password !== confirmPassword) {
       setError('Las contraseñas no coinciden')
       return
@@ -215,7 +219,7 @@ function AuthPageContent() {
         password,
         fullName: fullName.trim(),
         role, // Siempre 'user'
-        parishId: selectedParishId || (parishId.trim() || undefined),
+        parishId: selectedParishId,
       })
 
       // Mostrar mensaje de éxito
@@ -458,15 +462,20 @@ function AuthPageContent() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="parish">Parroquia (opcional)</Label>
+              <Label htmlFor="parish" className="flex items-center gap-2">
+                Parroquia <span className="text-destructive">*</span>
+                <span className="text-xs text-muted-foreground font-normal">(obligatorio)</span>
+              </Label>
               <div className="relative">
                 <Input
                   id="parish"
                   type="text"
                   value={parishId}
                   onChange={(e) => setParishId(e.target.value)}
-                  placeholder="Escribe para buscar por nombre"
+                  placeholder="Escribe para buscar por nombre (mínimo 2 letras)"
                   onFocus={() => parishOptions.length && setParishOpen(true)}
+                  className={!selectedParishId && parishId ? 'border-amber-500' : ''}
+                  required
                 />
                 {parishOpen && (
                   <div className="absolute z-10 mt-1 w-full bg-card border border-border rounded-md shadow-lg">
@@ -487,6 +496,17 @@ function AuthPageContent() {
                       <div className="px-3 py-2 text-sm text-muted-foreground">Sin resultados</div>
                     )}
                   </div>
+                )}
+                {selectedParishId && (
+                  <p className="text-xs text-green-600 dark:text-green-400 mt-1 flex items-center gap-1">
+                    <span>✓</span>
+                    Parroquia seleccionada correctamente
+                  </p>
+                )}
+                {!selectedParishId && parishId.length >= 2 && !parishLoading && parishOptions.length === 0 && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                    No se encontraron parroquias. Intenta con otro nombre.
+                  </p>
                 )}
               </div>
             </div>
