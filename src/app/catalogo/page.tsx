@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Suspense } from 'react'
 import Image from 'next/image'
 import { obtenerCatalogoPaginado, type FiltrosCatalogo } from '@/lib/supabase'
+import { createServerSupabaseClient } from '@/lib/supabase-server'
 import CatalogoUserFilter from '@/components/CatalogoUserFilter'
 import OptimizedImage from '@/components/OptimizedImage'
 import Pagination from '@/components/Pagination'
@@ -31,6 +32,27 @@ export default async function CatalogoPage({
 }) {
   const sp = await searchParams
 
+  // Obtener usuario actual y verificar permisos
+  const supabase = await createServerSupabaseClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  let userParishId: string | null = null
+  let isAdmin = false
+
+  if (user) {
+    // Obtener datos del perfil del usuario
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('parish_id, role, email')
+      .eq('id', user.id)
+      .single()
+
+    if (profile) {
+      userParishId = profile.parish_id
+      isAdmin = profile.role === 'admin' || profile.email === 'mcgnexus@gmail.com'
+    }
+  }
+
   // Parámetros de paginación
   const page = parseInt(sp.page || '1', 10)
   const perPage = parseInt(sp.per_page || '20', 10)
@@ -40,7 +62,12 @@ export default async function CatalogoPage({
   const tipo = (sp?.tipo || '').trim()
   const categoria = (sp?.categoria || '').trim().toLowerCase()
   const q = (sp?.q || '').trim()
-  const parroquia = (sp?.parroquia || '').trim()
+  let parroquia = (sp?.parroquia || '').trim()
+
+  // RESTRICCIÓN: Si no es admin, forzar filtro por su parroquia
+  if (!isAdmin && userParishId) {
+    parroquia = userParishId
+  }
 
   // Construir filtros para la consulta paginada
   const filtros: FiltrosCatalogo = {}
@@ -147,10 +174,17 @@ export default async function CatalogoPage({
       {/* Title */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-foreground">Catálogo Diocesano</h1>
-          {parishHeader && (
+          <h1 className="text-3xl font-bold text-foreground">
+            {isAdmin ? 'Catálogo Diocesano' : `Catálogo - ${parishHeader || 'Mi Parroquia'}`}
+          </h1>
+          {isAdmin && parishHeader && (
             <p className="text-sm text-muted-foreground">
               Parroquia: <span className="font-medium text-foreground">{parishHeader}</span>
+            </p>
+          )}
+          {!isAdmin && (
+            <p className="text-sm text-muted-foreground">
+              Mostrando solo items de tu parroquia
             </p>
           )}
           <div className="flex flex-wrap items-center gap-2">
@@ -230,22 +264,25 @@ export default async function CatalogoPage({
               </select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="parroquia">Parroquia</Label>
-              <select
-                id="parroquia"
-                name="parroquia"
-                defaultValue={parroquia}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              >
-                <option value="">Todas</option>
-                {parroquias.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Solo mostrar filtro de parroquia a admin */}
+            {isAdmin && (
+              <div className="space-y-2">
+                <Label htmlFor="parroquia">Parroquia</Label>
+                <select
+                  id="parroquia"
+                  name="parroquia"
+                  defaultValue={parroquia}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  <option value="">Todas</option>
+                  {parroquias.map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div className="flex-1 min-w-[200px] space-y-2">
               <Label htmlFor="buscar">Buscar</Label>
