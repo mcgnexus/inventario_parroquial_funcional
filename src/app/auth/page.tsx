@@ -1,6 +1,6 @@
 "use client"
 import { useEffect, useState, Suspense } from 'react'
-import { getCurrentUser, signOut, onAuthStateChange, signUpWithProfile } from '@/lib/auth'
+import { getCurrentUser, signOut, onAuthStateChange, signUpWithProfile, getSupabaseBrowser } from '@/lib/auth'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Eye, EyeOff, LogIn, UserPlus, LogOut, User } from 'lucide-react'
 import type { AuthResponse } from '@supabase/supabase-js'
